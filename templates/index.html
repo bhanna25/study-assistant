@@ -1,144 +1,571 @@
-<!DOCTYPE html>
-<html lang="en">
+ <!DOCTYPE html>
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <title>Study Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Georgia, serif; background: #f5f5f0; color: #1a1a1a; }
-    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
-    h1 { font-size: 24px; font-weight: 500; margin-bottom: 4px; }
-    .subtitle { color: #777; font-size: 13px; margin-bottom: 2rem; }
-    .tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; }
-    .tab { padding: 8px 18px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 14px; }
-    .tab.active { background: #534AB7; color: #fff; border-color: #534AB7; }
-    .section { display: none; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; }
+    :root[data-theme="dark"] {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --surface2: #252540;
+      --border: #2a2a4a;
+      --border2: #3a3a5a;
+      --text: #e8e8f0;
+      --muted: #8888aa;
+      --accent: #6c63ff;
+      --accent2: #a855f7;
+      --btn-text: #fff;
+    }
+    :root[data-theme="light"] {
+      --bg: #f0f0f8;
+      --surface: #ffffff;
+      --surface2: #f5f5ff;
+      --border: #e0e0f0;
+      --border2: #d0d0e8;
+      --text: #1a1a2e;
+      --muted: #6666aa;
+      --accent: #6c63ff;
+      --accent2: #a855f7;
+      --btn-text: #fff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; transition: background 0.3s, color 0.3s, border 0.3s; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--surface);
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+
+    .header-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    .header p { font-size: 11px; color: var(--muted); }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .theme-toggle {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 6px 14px;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .theme-toggle:hover { border-color: var(--accent); }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* CONTAINER */
+    .container { max-width: 820px; margin: 0 auto; padding: 2rem 1rem; }
+
+    /* MODE SWITCHER */
+    .mode-switcher {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--surface2);
+      font-weight: 500;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1.5rem;
+      background: var(--surface);
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px 6px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .tab span { font-size: 16px; }
+    .tab.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 500; }
+
+    /* SECTIONS */
+    .section { display: none; }
     .section.active { display: block; }
-    input, textarea { width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-family: inherit; }
-    textarea { min-height: 140px; resize: vertical; }
-    button.primary { padding: 10px 22px; background: #534AB7; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .result { margin-top: 1.2rem; padding: 1rem 1.2rem; background: #f9f9f7; border: 1px solid #e8e8e0; border-radius: 8px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
-    .chat-box { min-height: 260px; max-height: 360px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
-    .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
-    .msg.user { align-self: flex-end; background: #534AB7; color: #fff; border-radius: 12px 12px 4px 12px; }
-    .msg.ai { align-self: flex-start; background: #f0f0f0; border-radius: 12px 12px 12px 4px; }
-    .chat-input { display: flex; gap: 8px; }
-    .chat-input input { margin: 0; flex: 1; }
-    .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .row label { font-size: 13px; color: #666; white-space: nowrap; }
-    .row input[type=range] { flex: 1; }
-    .row span { font-size: 14px; font-weight: 500; min-width: 24px; }
-    .card { border: 1px solid #e0e0e0; border-radius: 10px; padding: 2rem; text-align: center; cursor: pointer; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
-    .card .label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #999; }
-    .card .text { font-size: 18px; line-height: 1.6; }
-    .card .hint { font-size: 12px; color: #aaa; }
-    .card-btns { display: flex; gap: 10px; margin-top: 10px; }
-    .card-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    .btn-review { background: #fff; border: 1px solid #ddd; }
-    .btn-got { background: #534AB7; color: #fff; border: none; }
-    .score { font-size: 13px; color: #777; text-align: right; margin-bottom: 8px; }
+
+    /* CARD */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    /* CHAT */
+    .chat-box {
+      min-height: 340px;
+      max-height: 440px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-right: 4px;
+    }
+
+    .chat-box::-webkit-scrollbar { width: 4px; }
+    .chat-box::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    .msg {
+      max-width: 82%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border-radius: 16px 16px 4px 16px;
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 16px 4px;
+    }
+
+    .msg.thinking {
+      align-self: flex-start;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-style: italic;
+      border-radius: 16px 16px 16px 4px;
+    }
+
+    /* QUICK PROMPTS */
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .quick-btn {
+      padding: 6px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .chat-input { display: flex; gap: 10px; }
+
+    input, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border 0.2s;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus { border-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    .chat-input input { flex: 1; width: auto; }
+
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text);
+    }
+
+    /* FORM */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+    .form-group textarea { min-height: 160px; resize: vertical; }
+
+    .range-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .range-row label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+    .range-row input[type=range] { flex: 1; accent-color: var(--accent); }
+    .range-row span { font-size: 14px; font-weight: 500; color: var(--accent2); min-width: 24px; }
+
+    /* RESULT */
+    .result-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; margin-top: 16px; }
+    .result { padding: 1.2rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; color: var(--text); }
+
+    /* FLASHCARD */
+    .progress-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+    .fc-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: 16px; padding: 2.5rem 2rem; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; gap: 12px; transition: border 0.2s; }
+    .fc-card:hover { border-color: var(--accent); }
+    .fc-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+    .fc-text { font-size: 18px; line-height: 1.6; color: var(--text); }
+    .fc-hint { font-size: 12px; color: var(--muted); }
+    .fc-btns { display: flex; gap: 10px; margin-top: 12px; }
+    .fc-btns button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif; cursor: pointer; }
+
+    /* DONE */
+    .done-card { text-align: center; padding: 3rem; }
+    .done-card .emoji { font-size: 48px; margin-bottom: 16px; }
+    .done-card h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .done-card p { color: var(--muted); margin-bottom: 24px; }
+    .done-btns { display: flex; gap: 10px; justify-content: center; }
+
+    /* FOOTER */
+    .footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--muted); }
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>Study Assistant</h1>
-  <p class="subtitle">Powered by Gemini · Ask, quiz, summarize, and plan</p>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('chat')">💬 Chat</button>
-    <button class="tab" onclick="switchTab('flashcards')">🃏 Flashcards</button>
-    <button class="tab" onclick="switchTab('summarize')">📝 Summarize</button>
-    <button class="tab" onclick="switchTab('studyplan')">📅 Study Plan</button>
-  </div>
-
-  <!-- CHAT -->
-  <div id="chat" class="section active">
-    <div class="chat-box" id="chatBox"></div>
-    <div class="chat-input">
-      <input id="chatInput" placeholder="Ask anything…" onkeydown="if(event.key==='Enter') sendChat()" />
-      <button class="primary" onclick="sendChat()">Send</button>
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🤖</div>
+    <div>
+      <h1>AI Assistant</h1>
+      <p>Powered by Groq · Always ready to help</p>
     </div>
   </div>
-
-  <!-- FLASHCARDS -->
-  <div id="flashcards" class="section">
-    <div id="fcSetup">
-      <input id="fcTopic" placeholder="Topic (e.g. Photosynthesis, French Revolution)" />
-      <div class="row">
-        <label>Number of cards</label>
-        <input type="range" min="3" max="15" value="5" id="fcCount" oninput="document.getElementById('fcCountVal').textContent=this.value" />
-        <span id="fcCountVal">5</span>
-      </div>
-      <button class="primary" onclick="generateCards()">Generate flashcards</button>
-    </div>
-    <div id="fcPlayer" style="display:none">
-      <div class="score" id="fcScore"></div>
-      <div class="card" id="fcCard" onclick="flipCard()">
-        <div class="label" id="fcLabel">Question</div>
-        <div class="text" id="fcText"></div>
-        <div class="hint" id="fcHint">tap to reveal</div>
-      </div>
-      <div class="card-btns" id="fcBtns" style="display:none">
-        <button class="btn-review" onclick="nextCard(false)">↺ Review again</button>
-        <button class="btn-got" onclick="nextCard(true)">✓ Got it</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SUMMARIZE -->
-  <div id="summarize" class="section">
-    <textarea id="notesInput" placeholder="Paste your notes or text here…"></textarea>
-    <button class="primary" onclick="summarizeNotes()">Summarize notes</button>
-    <div class="result" id="summaryResult" style="display:none"></div>
-  </div>
-
-  <!-- STUDY PLAN -->
-  <div id="studyplan" class="section">
-    <input id="spSubject" placeholder="Subject (e.g. Organic Chemistry, Data Structures)" />
-    <input id="spGoal" placeholder="Goal / exam (optional, e.g. JEE Mains, midterm)" />
-    <div class="row">
-      <label>Days to study</label>
-      <input type="range" min="3" max="30" value="7" id="spDays" oninput="document.getElementById('spDaysVal').textContent=this.value" />
-      <span id="spDaysVal">7</span>
-    </div>
-    <button class="primary" onclick="generatePlan()">Create study plan</button>
-    <div class="result" id="planResult" style="display:none"></div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
   </div>
 </div>
 
+<div class="container">
+
+  <!-- MODE SWITCHER -->
+  <div class="mode-switcher">
+    <button class="mode-btn active" onclick="switchMode('general', this)">🤖 General Assistant</button>
+    <button class="mode-btn" onclick="switchMode('study', this)">📚 Study Mode</button>
+  </div>
+
+  <!-- GENERAL MODE -->
+  <div id="generalMode">
+    <div class="card">
+      <div class="quick-prompts">
+        <button class="quick-btn" onclick="quickPrompt('Explain this concept simply:')">💡 Explain a concept</button>
+        <button class="quick-btn" onclick="quickPrompt('Write a short essay about:')">✍️ Write an essay</button>
+        <button class="quick-btn" onclick="quickPrompt('Give me tips for:')">🎯 Give me tips</button>
+        <button class="quick-btn" onclick="quickPrompt('What is the difference between')">🔄 Compare topics</button>
+        <button class="quick-btn" onclick="quickPrompt('Solve this problem:')">🧮 Solve a problem</button>
+        <button class="quick-btn" onclick="quickPrompt('Translate this to Hindi:')">🌐 Translate</button>
+      </div>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input">
+        <input id="chatInput" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter') sendChat()" />
+        <button class="btn" onclick="sendChat()">Send ➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STUDY MODE -->
+  <div id="studyMode" style="display:none">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('chat2', this)"><span>💬</span>Chat</button>
+      <button class="tab" onclick="switchTab('flashcards', this)"><span>🃏</span>Flashcards</button>
+      <button class="tab" onclick="switchTab('summarize', this)"><span>📝</span>Summarize</button>
+      <button class="tab" onclick="switchTab('studyplan', this)"><span>📅</span>Study Plan</button>
+    </div>
+
+    <!-- STUDY CHAT -->
+    <div id="chat2" class="section active">
+      <div class="card">
+        <div class="quick-prompts">
+          <button class="quick-btn" onclick="quickPrompt2('Explain this topic in simple terms:')">📖 Explain topic</button>
+          <button class="quick-btn" onclick="quickPrompt2('Give me practice questions on:')">📝 Practice questions</button>
+          <button class="quick-btn" onclick="quickPrompt2('Summarize the key points of:')">🎯 Key points</button>
+          <button class="quick-btn" onclick="quickPrompt2('What are common mistakes in:')">⚠️ Common mistakes</button>
+        </div>
+        <div class="chat-box" id="chatBox2"></div>
+        <div class="chat-input">
+          <input id="chatInput2" placeholder="Ask a study question…" onkeydown="if(event.key==='Enter') sendChat2()" />
+          <button class="btn" onclick="sendChat2()">Send ➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLASHCARDS -->
+    <div id="flashcards" class="section">
+      <div class="card" id="fcSetup">
+        <div class="form-group">
+          <label>Topic</label>
+          <input id="fcTopic" placeholder="e.g. Photosynthesis, French Revolution, Calculus" />
+        </div>
+        <div class="range-row">
+          <label>Number of cards</label>
+          <input type="range" min="3" max="15" value="5" id="fcCount" oninput="document.getElementById('fcCountVal').textContent=this.value" />
+          <span id="fcCountVal">5</span>
+        </div>
+        <button class="btn" id="fcBtn" onclick="generateCards()">Generate flashcards</button>
+      </div>
+      <div id="fcPlayer" style="display:none">
+        <div class="card">
+          <div class="progress-bar">
+            <span id="fcProgress">Card 1 of 5</span>
+            <span id="fcScore">✓ 0 · ↺ 0</span>
+          </div>
+          <div class="fc-card" id="fcCard" onclick="flipCard()">
+            <div class="fc-label" id="fcLabel">Question</div>
+            <div class="fc-text" id="fcText"></div>
+            <div class="fc-hint" id="fcHint">tap to reveal answer</div>
+          </div>
+          <div class="fc-btns" id="fcBtns" style="display:none">
+            <button class="btn btn-outline" onclick="nextCard(false)">↺ Review again</button>
+            <button class="btn" onclick="nextCard(true)">✓ Got it</button>
+          </div>
+        </div>
+      </div>
+      <div id="fcDone" style="display:none">
+        <div class="card done-card">
+          <div class="emoji">🎉</div>
+          <h2>Session complete!</h2>
+          <p id="doneText"></p>
+          <div class="done-btns">
+            <button class="btn btn-outline" onclick="restartCards()">Restart</button>
+            <button class="btn" onclick="newTopic()">New topic</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARIZE -->
+    <div id="summarize" class="section">
+      <div class="card">
+        <div class="form-group">
+          <label>Paste your notes or text</label>
+          <textarea id="notesInput" placeholder="Paste lecture notes, textbook content, or any study material here…"></textarea>
+        </div>
+        <button class="btn" id="sumBtn" onclick="summarizeNotes()">Summarize notes</button>
+        <div id="summaryResult" style="display:none">
+          <div class="result-label">Summary</div>
+          <div class="result" id="summaryText"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDY PLAN -->
+    <div id="studyplan" class="section">
+      <div class="card">
+        <div class="form-group">
+          <label>Subject</label>
+          <input id="spSubject" placeholder="e.g. Organic Chemistry, Data Structures, Spanish" />
+        </div>
+        <div class="form-group">
+          <label>Goal / Exam (optional)</label>
+          <input id="spGoal" placeholder="e.g. JEE Mains, midterm exam, IELTS" />
+        </div>
+        <div class="range-row">
+          <label>Days to study</label>
+          <input type="range" min="3" max="30" value="7" id="spDays" oninput="document.getElementById('spDaysVal').textContent=this.value" />
+          <span id="spDaysVal">7</span>
+        </div>
+        <button class="btn" id="planBtn" onclick="generatePlan()">Create study plan</button>
+        <div id="planResult" style="display:none">
+          <div class="result-label">Your Study Plan</div>
+          <div class="result" id="planText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Made with ❤️ · AI Assistant</div>
+
 <script>
-  function switchTab(name) {
+  // THEME
+  function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.getElementById("themeBtn");
+    if (html.getAttribute("data-theme") === "dark") {
+      html.setAttribute("data-theme", "light");
+      btn.textContent = "☀️ Light";
+    } else {
+      html.setAttribute("data-theme", "dark");
+      btn.textContent = "🌙 Dark";
+    }
+  }
+
+  // MODE
+  function switchMode(mode, el) {
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("generalMode").style.display = mode === "general" ? "block" : "none";
+    document.getElementById("studyMode").style.display = mode === "study" ? "block" : "none";
+  }
+
+  // TABS
+  function switchTab(name, el) {
     document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById(name).classList.add("active");
-    event.target.classList.add("active");
+    el.classList.add("active");
   }
 
+  // API
   async function post(url, data) {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     return res.json();
   }
 
-  // CHAT
-  function addMsg(text, role) {
-    const box = document.getElementById("chatBox");
+  // QUICK PROMPTS
+  function quickPrompt(text) {
+    document.getElementById("chatInput").value = text + " ";
+    document.getElementById("chatInput").focus();
+  }
+
+  function quickPrompt2(text) {
+    document.getElementById("chatInput2").value = text + " ";
+    document.getElementById("chatInput2").focus();
+  }
+
+  // CHAT (General)
+  function addMsg(text, role, boxId) {
+    const box = document.getElementById(boxId);
     const div = document.createElement("div");
     div.className = `msg ${role}`;
     div.textContent = text;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+    return div;
   }
 
   async function sendChat() {
     const input = document.getElementById("chatInput");
     const q = input.value.trim();
     if (!q) return;
-    addMsg(q, "user");
+    addMsg(q, "user", "chatBox");
     input.value = "";
-    addMsg("Thinking…", "ai");
+    const thinking = addMsg("Thinking…", "thinking", "chatBox");
     const data = await post("/chat", { question: q });
-    document.querySelectorAll(".msg.ai").forEach((m, i, arr) => { if (i === arr.length - 1) m.textContent = data.answer; });
+    thinking.className = "msg ai";
+    thinking.textContent = data.answer;
+    document.getElementById("chatBox").scrollTop = 99999;
+  }
+
+  // CHAT (Study)
+  async function sendChat2() {
+    const input = document.getElementById("chatInput2");
+    const q = input.value.trim();
+    if (!q) return;
+    addMsg(q, "user", "chatBox2");
+    input.value = "";
+    const thinking = addMsg("Thinking…", "thinking", "chatBox2");
+    const data = await post("/chat", { question: q });
+    thinking.className = "msg ai";
+    thinking.textContent = data.answer;
+    document.getElementById("chatBox2").scrollTop = 99999;
   }
 
   // FLASHCARDS
@@ -148,7 +575,8 @@
     const topic = document.getElementById("fcTopic").value.trim();
     const count = document.getElementById("fcCount").value;
     if (!topic) return;
-    document.querySelector("#fcSetup button").textContent = "Generating…";
+    const btn = document.getElementById("fcBtn");
+    btn.textContent = "Generating…"; btn.disabled = true;
     const data = await post("/flashcards", { topic, count: parseInt(count) });
     try {
       const clean = data.answer.replace(/```json|```/g, "").trim();
@@ -158,7 +586,7 @@
       document.getElementById("fcPlayer").style.display = "block";
       showCard();
     } catch { alert("Error parsing flashcards. Try again."); }
-    document.querySelector("#fcSetup button").textContent = "Generate flashcards";
+    btn.textContent = "Generate flashcards"; btn.disabled = false;
   }
 
   function showCard() {
@@ -166,7 +594,8 @@
     document.getElementById("fcLabel").textContent = "Question";
     document.getElementById("fcHint").style.display = "block";
     document.getElementById("fcBtns").style.display = "none";
-    document.getElementById("fcScore").textContent = `Card ${cardIndex + 1} of ${cards.length} · ✓ ${score.know} · ↺ ${score.review}`;
+    document.getElementById("fcProgress").textContent = `Card ${cardIndex + 1} of ${cards.length}`;
+    document.getElementById("fcScore").textContent = `✓ ${score.know} · ↺ ${score.review}`;
     flipped = false;
   }
 
@@ -183,22 +612,34 @@
     score[know ? "know" : "review"]++;
     cardIndex++;
     if (cardIndex >= cards.length) {
-      document.getElementById("fcCard").innerHTML = `<div class="text">🎉 Done! Knew: ${score.know} · Review: ${score.review}</div>`;
-      document.getElementById("fcBtns").style.display = "none";
-      document.getElementById("fcScore").textContent = "";
+      document.getElementById("fcPlayer").style.display = "none";
+      document.getElementById("fcDone").style.display = "block";
+      document.getElementById("doneText").textContent = `Knew: ${score.know} · Review: ${score.review} of ${cards.length} cards`;
     } else { showCard(); }
+  }
+
+  function restartCards() {
+    cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
+    document.getElementById("fcDone").style.display = "none";
+    document.getElementById("fcPlayer").style.display = "block";
+    showCard();
+  }
+
+  function newTopic() {
+    document.getElementById("fcDone").style.display = "none";
+    document.getElementById("fcSetup").style.display = "block";
+    document.getElementById("fcTopic").value = "";
   }
 
   // SUMMARIZE
   async function summarizeNotes() {
     const notes = document.getElementById("notesInput").value.trim();
     if (!notes) return;
-    const btn = document.querySelector("#summarize button");
+    const btn = document.getElementById("sumBtn");
     btn.textContent = "Summarizing…"; btn.disabled = true;
     const data = await post("/summarize", { notes });
-    const result = document.getElementById("summaryResult");
-    result.textContent = data.answer;
-    result.style.display = "block";
+    document.getElementById("summaryText").textContent = data.answer;
+    document.getElementById("summaryResult").style.display = "block";
     btn.textContent = "Summarize notes"; btn.disabled = false;
   }
 
@@ -208,12 +649,11 @@
     const goal = document.getElementById("spGoal").value.trim();
     const days = document.getElementById("spDays").value;
     if (!subject) return;
-    const btn = document.querySelector("#studyplan button");
+    const btn = document.getElementById("planBtn");
     btn.textContent = "Building plan…"; btn.disabled = true;
     const data = await post("/studyplan", { subject, goal, days: parseInt(days) });
-    const result = document.getElementById("planResult");
-    result.textContent = data.answer;
-    result.style.display = "block";
+    document.getElementById("planText").textContent = data.answer;
+    document.getElementById("planResult").style.display = "block";
     btn.textContent = "Create study plan"; btn.disabled = false;
   }
 </script>
