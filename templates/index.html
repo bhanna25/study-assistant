@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Study Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, serif; background: #f5f5f0; color: #1a1a1a; }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
+    h1 { font-size: 24px; font-weight: 500; margin-bottom: 4px; }
+    .subtitle { color: #777; font-size: 13px; margin-bottom: 2rem; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; }
+    .tab { padding: 8px 18px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-size: 14px; }
+    .tab.active { background: #534AB7; color: #fff; border-color: #534AB7; }
+    .section { display: none; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; }
+    .section.active { display: block; }
+    input, textarea { width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; font-family: inherit; }
+    textarea { min-height: 140px; resize: vertical; }
+    button.primary { padding: 10px 22px; background: #534AB7; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { margin-top: 1.2rem; padding: 1rem 1.2rem; background: #f9f9f7; border: 1px solid #e8e8e0; border-radius: 8px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
+    .chat-box { min-height: 260px; max-height: 360px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+    .msg.user { align-self: flex-end; background: #534AB7; color: #fff; border-radius: 12px 12px 4px 12px; }
+    .msg.ai { align-self: flex-start; background: #f0f0f0; border-radius: 12px 12px 12px 4px; }
+    .chat-input { display: flex; gap: 8px; }
+    .chat-input input { margin: 0; flex: 1; }
+    .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .row label { font-size: 13px; color: #666; white-space: nowrap; }
+    .row input[type=range] { flex: 1; }
+    .row span { font-size: 14px; font-weight: 500; min-width: 24px; }
+    .card { border: 1px solid #e0e0e0; border-radius: 10px; padding: 2rem; text-align: center; cursor: pointer; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+    .card .label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #999; }
+    .card .text { font-size: 18px; line-height: 1.6; }
+    .card .hint { font-size: 12px; color: #aaa; }
+    .card-btns { display: flex; gap: 10px; margin-top: 10px; }
+    .card-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .btn-review { background: #fff; border: 1px solid #ddd; }
+    .btn-got { background: #534AB7; color: #fff; border: none; }
+    .score { font-size: 13px; color: #777; text-align: right; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Study Assistant</h1>
+  <p class="subtitle">Powered by Gemini · Ask, quiz, summarize, and plan</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('chat')">💬 Chat</button>
+    <button class="tab" onclick="switchTab('flashcards')">🃏 Flashcards</button>
+    <button class="tab" onclick="switchTab('summarize')">📝 Summarize</button>
+    <button class="tab" onclick="switchTab('studyplan')">📅 Study Plan</button>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat" class="section active">
+    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-input">
+      <input id="chatInput" placeholder="Ask anything…" onkeydown="if(event.key==='Enter') sendChat()" />
+      <button class="primary" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <div id="flashcards" class="section">
+    <div id="fcSetup">
+      <input id="fcTopic" placeholder="Topic (e.g. Photosynthesis, French Revolution)" />
+      <div class="row">
+        <label>Number of cards</label>
+        <input type="range" min="3" max="15" value="5" id="fcCount" oninput="document.getElementById('fcCountVal').textContent=this.value" />
+        <span id="fcCountVal">5</span>
+      </div>
+      <button class="primary" onclick="generateCards()">Generate flashcards</button>
+    </div>
+    <div id="fcPlayer" style="display:none">
+      <div class="score" id="fcScore"></div>
+      <div class="card" id="fcCard" onclick="flipCard()">
+        <div class="label" id="fcLabel">Question</div>
+        <div class="text" id="fcText"></div>
+        <div class="hint" id="fcHint">tap to reveal</div>
+      </div>
+      <div class="card-btns" id="fcBtns" style="display:none">
+        <button class="btn-review" onclick="nextCard(false)">↺ Review again</button>
+        <button class="btn-got" onclick="nextCard(true)">✓ Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARIZE -->
+  <div id="summarize" class="section">
+    <textarea id="notesInput" placeholder="Paste your notes or text here…"></textarea>
+    <button class="primary" onclick="summarizeNotes()">Summarize notes</button>
+    <div class="result" id="summaryResult" style="display:none"></div>
+  </div>
+
+  <!-- STUDY PLAN -->
+  <div id="studyplan" class="section">
+    <input id="spSubject" placeholder="Subject (e.g. Organic Chemistry, Data Structures)" />
+    <input id="spGoal" placeholder="Goal / exam (optional, e.g. JEE Mains, midterm)" />
+    <div class="row">
+      <label>Days to study</label>
+      <input type="range" min="3" max="30" value="7" id="spDays" oninput="document.getElementById('spDaysVal').textContent=this.value" />
+      <span id="spDaysVal">7</span>
+    </div>
+    <button class="primary" onclick="generatePlan()">Create study plan</button>
+    <div class="result" id="planResult" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(name).classList.add("active");
+    event.target.classList.add("active");
+  }
+
+  async function post(url, data) {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    return res.json();
+  }
+
+  // CHAT
+  function addMsg(text, role) {
+    const box = document.getElementById("chatBox");
+    const div = document.createElement("div");
+    div.className = `msg ${role}`;
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendChat() {
+    const input = document.getElementById("chatInput");
+    const q = input.value.trim();
+    if (!q) return;
+    addMsg(q, "user");
+    input.value = "";
+    addMsg("Thinking…", "ai");
+    const data = await post("/chat", { question: q });
+    document.querySelectorAll(".msg.ai").forEach((m, i, arr) => { if (i === arr.length - 1) m.textContent = data.answer; });
+  }
+
+  // FLASHCARDS
+  let cards = [], cardIndex = 0, flipped = false, score = { know: 0, review: 0 };
+
+  async function generateCards() {
+    const topic = document.getElementById("fcTopic").value.trim();
+    const count = document.getElementById("fcCount").value;
+    if (!topic) return;
+    document.querySelector("#fcSetup button").textContent = "Generating…";
+    const data = await post("/flashcards", { topic, count: parseInt(count) });
+    try {
+      const clean = data.answer.replace(/```json|```/g, "").trim();
+      cards = JSON.parse(clean);
+      cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
+      document.getElementById("fcSetup").style.display = "none";
+      document.getElementById("fcPlayer").style.display = "block";
+      showCard();
+    } catch { alert("Error parsing flashcards. Try again."); }
+    document.querySelector("#fcSetup button").textContent = "Generate flashcards";
+  }
+
+  function showCard() {
+    document.getElementById("fcText").textContent = cards[cardIndex].q;
+    document.getElementById("fcLabel").textContent = "Question";
+    document.getElementById("fcHint").style.display = "block";
+    document.getElementById("fcBtns").style.display = "none";
+    document.getElementById("fcScore").textContent = `Card ${cardIndex + 1} of ${cards.length} · ✓ ${score.know} · ↺ ${score.review}`;
+    flipped = false;
+  }
+
+  function flipCard() {
+    if (flipped) return;
+    flipped = true;
+    document.getElementById("fcText").textContent = cards[cardIndex].a;
+    document.getElementById("fcLabel").textContent = "Answer";
+    document.getElementById("fcHint").style.display = "none";
+    document.getElementById("fcBtns").style.display = "flex";
+  }
+
+  function nextCard(know) {
+    score[know ? "know" : "review"]++;
+    cardIndex++;
+    if (cardIndex >= cards.length) {
+      document.getElementById("fcCard").innerHTML = `<div class="text">🎉 Done! Knew: ${score.know} · Review: ${score.review}</div>`;
+      document.getElementById("fcBtns").style.display = "none";
+      document.getElementById("fcScore").textContent = "";
+    } else { showCard(); }
+  }
+
+  // SUMMARIZE
+  async function summarizeNotes() {
+    const notes = document.getElementById("notesInput").value.trim();
+    if (!notes) return;
+    const btn = document.querySelector("#summarize button");
+    btn.textContent = "Summarizing…"; btn.disabled = true;
+    const data = await post("/summarize", { notes });
+    const result = document.getElementById("summaryResult");
+    result.textContent = data.answer;
+    result.style.display = "block";
+    btn.textContent = "Summarize notes"; btn.disabled = false;
+  }
+
+  // STUDY PLAN
+  async function generatePlan() {
+    const subject = document.getElementById("spSubject").value.trim();
+    const goal = document.getElementById("spGoal").value.trim();
+    const days = document.getElementById("spDays").value;
+    if (!subject) return;
+    const btn = document.querySelector("#studyplan button");
+    btn.textContent = "Building plan…"; btn.disabled = true;
+    const data = await post("/studyplan", { subject, goal, days: parseInt(days) });
+    const result = document.getElementById("planResult");
+    result.textContent = data.answer;
+    result.style.display = "block";
+    btn.textContent = "Create study plan"; btn.disabled = false;
+  }
+</script>
+</body>
+</html>
