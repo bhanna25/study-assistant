@@ -581,9 +581,8 @@
     input.value = "";
     const thinking = addMsg("Thinking…", "thinking", "chatBox");
     const data = await post("/chat", { question: q });
-    thinking.className = "msg ai";
-    thinking.textContent = data.answer;
-    document.getElementById("chatBox").scrollTop = 99999;
+    thinking.parentElement.remove();
+    addMsg(data.answer, "ai", "chatBox");
   }
 
   // CHAT (Study)
@@ -595,9 +594,8 @@
     input.value = "";
     const thinking = addMsg("Thinking…", "thinking", "chatBox2");
     const data = await post("/chat", { question: q });
-    thinking.className = "msg ai";
-    thinking.textContent = data.answer;
-    document.getElementById("chatBox2").scrollTop = 99999;
+    thinking.parentElement.remove();
+    addMsg(data.answer, "ai", "chatBox2");
   }
 
   // FLASHCARDS
