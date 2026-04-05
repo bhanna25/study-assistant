@@ -341,6 +341,9 @@
     <div class="status-dot"></div>
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
     <button class="theme-toggle" onclick="clearHistory()">🗑️ Clear</button>
+    <button onclick="clearHistory()" class="your-clear-btn-class">
+    <i class="fas fa-trash"></i> Clear
+    </button>
   </div>
 </div>
 
@@ -540,10 +543,46 @@
     wrapper.style.alignItems = role == "user" ? "flex-end" : "flex-start";
     wrapper.style.gap = "4px";
 
+     async function loadHistory() {
+    try {
+        const res = await fetch('/history');
+        const data = await res.json();
+        
+        // Dono modes (General aur Study) ke liye messages load karein
+        data.messages.forEach(msg => {
+            const role = msg.role === 'user' ? 'user' : 'ai';
+            addMsg(msg.content, role, "chatBox");
+            addMsg(msg.content, role, "chatBox2");
+        });
+    } catch (err) {
+        console.error("History load karne mein error:", err);
+    }
+}
+
+// Page load hote hi ise call karein
+window.addEventListener('DOMContentLoaded', loadHistory);
+
+async function clearHistory() {
+    if (confirm("Kya aap saari history delete karna chahte hain?")) {
+        try {
+            const res = await post('/clear', {}); // Aapka pehle se bana hua post function use kar rahe hain
+            if (res.status === 'cleared') {
+                document.getElementById("chatBox").innerHTML = '';
+                document.getElementById("chatBox2").innerHTML = '';
+                alert("History saaf ho gayi!");
+            }
+        } catch (err) {
+            alert("Delete karne mein dikkat aayi.");
+        }
+    }
+}
+
     const div = document.createElement("div");
     div.className = `msg ${role}`;
     div.textContent = text;
     wrapper.appendChild(div);
+    
+   
 
     if (role === "ai") {
       const copyBtn = document.createElement("button");
