@@ -340,6 +340,7 @@
   <div class="header-right">
     <div class="status-dot"></div>
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+    <button class="theme-toggle" onclick="clearHistory()">🗑️ Clear</button>
   </div>
 </div>
 
@@ -685,6 +686,20 @@
     document.getElementById("planText").textContent = data.answer;
     document.getElementById("planResult").style.display = "block";
     btn.textContent = "Create study plan"; btn.disabled = false;
+
+    // Load history on page load
+async function loadHistory() {
+    const data = await fetch("/history").then(r => r.json());
+    data.messages.forEach(m => addMsg(m.content, m.role, "chatBox"));
+}
+
+async function clearHistory() {
+    await post("/clear", {});
+    document.getElementById("chatBox").innerHTML = "";
+    document.getElementById("chatBox2").innerHTML = "";
+}
+
+window.onload = loadHistory;
   }
 </script>
 </body>
