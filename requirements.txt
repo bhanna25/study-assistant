@@ -1,4 +1,5 @@
 flask
 groq
 gunicorn
+supabase
 

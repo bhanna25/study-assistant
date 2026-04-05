@@ -1,25 +1,14 @@
-import sqlite3
-from datetime import datetime
 from flask import Flask, request, jsonify, render_template
 from groq import Groq
-
-def init_db():
-    conn = sqlite3.connect('chat_history.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS messages
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  role TEXT,
-                  content TEXT,
-                  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)''')
-    conn.commit()
-    conn.close()
-
-init_db()
+import os
+from supabase import create_client
 
 app = Flask(__name__)
-
-import os
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+db = create_client(supabase_url, supabase_key)
 
 def ask_ai(prompt, system="You are a helpful study assistant."):
     response = client.chat.completions.create(
@@ -40,15 +29,8 @@ def chat():
     question = request.json.get("question")
     try:
         answer = ask_ai(question, "You are a helpful AI assistant. Answer any question clearly.")
-        
-        # Save to database
-        conn = sqlite3.connect('chat_history.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO messages (role, content) VALUES (?, ?)", ("user", question))
-        c.execute("INSERT INTO messages (role, content) VALUES (?, ?)", ("ai", answer))
-        conn.commit()
-        conn.close()
-        
+        db.table("messages").insert({"role": "user", "content": question}).execute()
+        db.table("messages").insert({"role": "ai", "content": answer}).execute()
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"answer": f"Error: {str(e)}"})
@@ -78,20 +60,12 @@ def studyplan():
 
 @app.route("/history", methods=["GET"])
 def history():
-    conn = sqlite3.connect('chat_history.db')
-    c = conn.cursor()
-    c.execute("SELECT role, content FROM messages ORDER BY id DESC LIMIT 20")
-    messages = [{"role": row[0], "content": row[1]} for row in c.fetchall()]
-    conn.close()
-    return jsonify({"messages": messages[::-1]})
+    data = db.table("messages").select("*").order("id").limit(20).execute()
+    return jsonify({"messages": data.data})
 
 @app.route("/clear", methods=["POST"])
 def clear():
-    conn = sqlite3.connect('chat_history.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM messages")
-    conn.commit()
-    conn.close()
+    db.table("messages").delete().neq("id", 0).execute()
     return jsonify({"status": "cleared"})
 
 if __name__ == "__main__":
