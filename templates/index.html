@@ -741,7 +741,7 @@ async function clearHistory() {
     document.getElementById("chatBox2").innerHTML = "";
 }
 
-window.onload = loadHistory;
+window.onload = () => setTimeout(loadHistory, 500);
  }
 </script>
 </body>
