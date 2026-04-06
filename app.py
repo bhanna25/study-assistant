@@ -4,6 +4,7 @@ import os
 from supabase import create_client
 
 app = Flask(__name__)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 supabase_url = os.environ.get("SUPABASE_URL")
