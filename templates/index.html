@@ -543,35 +543,27 @@
     wrapper.style.alignItems = role == "user" ? "flex-end" : "flex-start";
     wrapper.style.gap = "4px";
 
-     async function loadHistory() {
-    console.log("🔄 loadHistory() function called");   // ← Yeh line zaroor daalo
-
+    async function loadHistory() {
     try {
-        const res = await fetch(`${window.location.origin}/history`);
-        
-        console.log("📡 Fetch response status:", res.status);   // ← Yeh bhi add karo
-
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-
+        const res = await fetch("/history");
         const data = await res.json();
-        console.log("✅ History data received:", data);   // ← Yeh sabse important
-
-        // Ab yahan se tumhara purana code paste kar do (box.innerHTML etc.)
         const box = document.getElementById("chatBox");
         if (data.messages && data.messages.length > 0) {
             box.innerHTML = "";
             data.messages.forEach(m => {
-                // tumhara message rendering code yahan rahega
+                const div = document.createElement("div");
+                div.className = `msg ${m.role}`;
+                div.textContent = m.content;
+                div.style.alignSelf = m.role === "user" ? "flex-end" : "flex-start";
+                box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         }
-
-    } catch (e) {
-        console.error("❌ History load error:", e);
+    } catch(e) {
+        console.log("History error:", e);
     }
 }
+  
 window.onload = () => {
     setTimeout(loadHistory, 300);   // ya direct loadHistory();
 };
