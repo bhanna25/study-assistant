@@ -544,20 +544,38 @@
     wrapper.style.gap = "4px";
 
      async function loadHistory() {
+    console.log("🔄 loadHistory() function called");   // ← Yeh line zaroor daalo
+
     try {
-        const res = await fetch('/history');
-        const data = await res.json();
+        const res = await fetch(`${window.location.origin}/history`);
         
-        // Dono modes (General aur Study) ke liye messages load karein
-        data.messages.forEach(msg => {
-            const role = msg.role === 'user' ? 'user' : 'ai';
-            addMsg(msg.content, role, "chatBox");
-            addMsg(msg.content, role, "chatBox2");
-        });
-    } catch (err) {
-        console.error("History load karne mein error:", err);
+        console.log("📡 Fetch response status:", res.status);   // ← Yeh bhi add karo
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("✅ History data received:", data);   // ← Yeh sabse important
+
+        // Ab yahan se tumhara purana code paste kar do (box.innerHTML etc.)
+        const box = document.getElementById("chatBox");
+        if (data.messages && data.messages.length > 0) {
+            box.innerHTML = "";
+            data.messages.forEach(m => {
+                // tumhara message rendering code yahan rahega
+            });
+            box.scrollTop = box.scrollHeight;
+        }
+
+    } catch (e) {
+        console.error("❌ History load error:", e);
     }
 }
+window.onload = () => {
+    setTimeout(loadHistory, 300);   // ya direct loadHistory();
+};
+  
 
 // Page load hote hi ise call karein
 window.addEventListener('DOMContentLoaded', loadHistory);

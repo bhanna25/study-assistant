@@ -2,4 +2,5 @@ flask
 groq
 gunicorn
 supabase
+flask-cors
 

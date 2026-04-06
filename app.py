@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 from groq import Groq
 import os
 from supabase import create_client
 
 app = Flask(__name__)
+CORS(app)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
