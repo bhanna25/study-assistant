@@ -485,6 +485,8 @@
 
 <div class="footer">Made with ❤️ · AI Assistant</div>
 
+
+
 <script>
   // THEME
   function toggleTheme() {
@@ -724,10 +726,13 @@ async function clearHistory() {
     document.getElementById("planResult").style.display = "block";
     btn.textContent = "Create study plan"; btn.disabled = false;
 
-    // Load history on page load
 async function loadHistory() {
-    const data = await fetch("/history").then(r => r.json());
-    data.messages.forEach(m => addMsg(m.content, m.role, "chatBox"));
+    try {
+        const data = await fetch("/history").then(r => r.json());
+        if (data.messages) {
+            data.messages.forEach(m => addMsg(m.content, m.role, "chatBox"));
+        }
+    } catch(e) { console.log("No history yet"); }
 }
 
 async function clearHistory() {
@@ -737,7 +742,7 @@ async function clearHistory() {
 }
 
 window.onload = loadHistory;
-  }
+ }
 </script>
 </body>
 </html>
