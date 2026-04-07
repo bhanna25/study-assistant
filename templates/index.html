@@ -805,12 +805,8 @@
         setTimeout(() => copyBtn.textContent = "📋 Copy", 2000);
       };
       wrapper.appendChild(copyBtn);
+    
     }
-
-    box.appendChild(wrapper);
-    box.scrollTop = box.scrollHeight;
-    return div;
-  
 
     async function sendChat() {
       const input = document.getElementById("chatInput");
