@@ -1,10 +1,14 @@
-9 <!DOCTYPE html>
+9
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Assistant</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap"
+    rel="stylesheet">
   <style>
     :root[data-theme="dark"] {
       --bg: #0f0f1a;
@@ -18,6 +22,7 @@
       --accent2: #a855f7;
       --btn-text: #fff;
     }
+
     :root[data-theme="light"] {
       --bg: #f0f0f8;
       --surface: #ffffff;
@@ -31,7 +36,12 @@
       --btn-text: #fff;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; transition: background 0.3s, color 0.3s, border 0.3s; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s, border 0.3s;
+    }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -53,7 +63,11 @@
       z-index: 100;
     }
 
-    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
     .header-icon {
       width: 38px;
@@ -72,9 +86,16 @@
       color: var(--text);
     }
 
-    .header p { font-size: 11px; color: var(--muted); }
+    .header p {
+      font-size: 11px;
+      color: var(--muted);
+    }
 
-    .header-right { display: flex; align-items: center; gap: 10px; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
     .theme-toggle {
       background: var(--surface2);
@@ -90,7 +111,9 @@
       font-family: 'Inter', sans-serif;
     }
 
-    .theme-toggle:hover { border-color: var(--accent); }
+    .theme-toggle:hover {
+      border-color: var(--accent);
+    }
 
     .status-dot {
       width: 8px;
@@ -101,12 +124,23 @@
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
     }
 
     /* CONTAINER */
-    .container { max-width: 820px; margin: 0 auto; padding: 2rem 1rem; }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
 
     /* MODE SWITCHER */
     .mode-switcher {
@@ -164,12 +198,24 @@
       gap: 3px;
     }
 
-    .tab span { font-size: 16px; }
-    .tab.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 500; }
+    .tab span {
+      font-size: 16px;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-weight: 500;
+    }
 
     /* SECTIONS */
-    .section { display: none; }
-    .section.active { display: block; }
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
 
     /* CARD */
     .card {
@@ -191,8 +237,14 @@
       padding-right: 4px;
     }
 
-    .chat-box::-webkit-scrollbar { width: 4px; }
-    .chat-box::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    .chat-box::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .chat-box::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 4px;
+    }
 
     .msg {
       max-width: 82%;
@@ -247,11 +299,18 @@
       transition: all 0.2s;
     }
 
-    .quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .quick-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
 
-    .chat-input { display: flex; gap: 10px; }
+    .chat-input {
+      display: flex;
+      gap: 10px;
+    }
 
-    input, textarea {
+    input,
+    textarea {
       background: var(--surface2);
       border: 1px solid var(--border2);
       border-radius: 10px;
@@ -264,9 +323,20 @@
       width: 100%;
     }
 
-    input:focus, textarea:focus { border-color: var(--accent); }
-    input::placeholder, textarea::placeholder { color: var(--muted); }
-    .chat-input input { flex: 1; width: auto; }
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .chat-input input {
+      flex: 1;
+      width: auto;
+    }
 
     .btn {
       padding: 12px 24px;
@@ -282,9 +352,18 @@
       white-space: nowrap;
     }
 
-    .btn:hover { opacity: 0.9; }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
     .btn-outline {
       background: transparent;
@@ -293,283 +372,421 @@
     }
 
     /* FORM */
-    .form-group { margin-bottom: 14px; }
-    .form-group label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
-    .form-group textarea { min-height: 160px; resize: vertical; }
+    .form-group {
+      margin-bottom: 14px;
+    }
 
-    .range-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-    .range-row label { font-size: 13px; color: var(--muted); white-space: nowrap; }
-    .range-row input[type=range] { flex: 1; accent-color: var(--accent); }
-    .range-row span { font-size: 14px; font-weight: 500; color: var(--accent2); min-width: 24px; }
+    .form-group label {
+      font-size: 13px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .form-group textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .range-row label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .range-row input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    .range-row span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--accent2);
+      min-width: 24px;
+    }
 
     /* RESULT */
-    .result-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; margin-top: 16px; }
-    .result { padding: 1.2rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; color: var(--text); }
+    .result-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      margin-top: 16px;
+    }
+
+    .result {
+      padding: 1.2rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
 
     /* FLASHCARD */
-    .progress-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
-    .fc-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: 16px; padding: 2.5rem 2rem; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; gap: 12px; transition: border 0.2s; }
-    .fc-card:hover { border-color: var(--accent); }
-    .fc-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
-    .fc-text { font-size: 18px; line-height: 1.6; color: var(--text); }
-    .fc-hint { font-size: 12px; color: var(--muted); }
-    .fc-btns { display: flex; gap: 10px; margin-top: 12px; }
-    .fc-btns button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif; cursor: pointer; }
+    .progress-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .fc-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      text-align: center;
+      gap: 12px;
+      transition: border 0.2s;
+    }
+
+    .fc-card:hover {
+      border-color: var(--accent);
+    }
+
+    .fc-label {
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .fc-text {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .fc-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .fc-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .fc-btns button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+    }
 
     /* DONE */
-    .done-card { text-align: center; padding: 3rem; }
-    .done-card .emoji { font-size: 48px; margin-bottom: 16px; }
-    .done-card h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-    .done-card p { color: var(--muted); margin-bottom: 24px; }
-    .done-btns { display: flex; gap: 10px; justify-content: center; }
+    .done-card {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .done-card .emoji {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .done-card h2 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .done-card p {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .done-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
 
     /* FOOTER */
-    .footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--muted); }
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 12px;
+      color: var(--muted);
+    }
   </style>
 </head>
+
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <div class="header-icon">🤖</div>
-    <div>
-      <h1>AI Assistant</h1>
-      <p>Powered by Groq · Always ready to help</p>
-    </div>
-  </div>
-  <div class="header-right">
-    <div class="status-dot"></div>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
-    <button class="theme-toggle" onclick="clearHistory()">🗑️ Clear</button>
-    
-  </div>
-</div>
-
-<div class="container">
-
-  <!-- MODE SWITCHER -->
-  <div class="mode-switcher">
-    <button class="mode-btn active" onclick="switchMode('general', this)">🤖 General Assistant</button>
-    <button class="mode-btn" onclick="switchMode('study', this)">📚 Study Mode</button>
-  </div>
-
-  <!-- GENERAL MODE -->
-  <div id="generalMode">
-    <div class="card">
-      <div class="quick-prompts">
-        <button class="quick-btn" onclick="quickPrompt('Explain this concept simply:')">💡 Explain a concept</button>
-        <button class="quick-btn" onclick="quickPrompt('Write a short essay about:')">✍️ Write an essay</button>
-        <button class="quick-btn" onclick="quickPrompt('Give me tips for:')">🎯 Give me tips</button>
-        <button class="quick-btn" onclick="quickPrompt('What is the difference between')">🔄 Compare topics</button>
-        <button class="quick-btn" onclick="quickPrompt('Solve this problem:')">🧮 Solve a problem</button>
-        <button class="quick-btn" onclick="quickPrompt('Translate this to Hindi:')">🌐 Translate</button>
-      </div>
-      <div class="chat-box" id="chatBox"></div>
-      <div class="chat-input">
-        <input id="chatInput" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter') sendChat()" />
-        <button class="btn" onclick="sendChat()">Send ➤</button>
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">🤖</div>
+      <div>
+        <h1>AI Assistant</h1>
+        <p>Powered by Groq · Always ready to help</p>
       </div>
     </div>
+    <div class="header-right">
+      <div class="status-dot"></div>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+      <button class="theme-toggle" onclick="clearHistory()">🗑️ Clear</button>
+
+    </div>
   </div>
 
-  <div class="app-container" style="display: flex; height: 100vh;">
-    <div id="sidebar" style="width: 260px; background: #171717; border-right: 1px solid #333; padding: 20px; overflow-y: auto;">
-        <h3 style="color: white; margin-bottom: 20px;">Study History</h3>
-        <div id="history-sidebar-list">
-            </div>
-        <button onclick="clearHistory()" style="margin-top: 20px; background: transparent; border: 1px solid #444; color: #ff4d4d; width: 100%; cursor: pointer; padding: 8px;">Clear All</button>
+  <div class="container">
+
+    <!-- MODE SWITCHER -->
+    <div class="mode-switcher">
+      <button class="mode-btn active" onclick="switchMode('general', this)">🤖 General Assistant</button>
+      <button class="mode-btn" onclick="switchMode('study', this)">📚 Study Mode</button>
     </div>
 
-    <div class="main-content" style="flex-grow: 1; display: flex; flex-direction: column; background: #212121;">
-        <div id="chatBox" style="flex-grow: 1; overflow-y: auto; padding: 20px;">
-            </div>
-        </div>
-</div>
-x
-  <!-- STUDY MODE -->
-  <div id="studyMode" style="display:none">
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('chat2', this)"><span>💬</span>Chat</button>
-      <button class="tab" onclick="switchTab('flashcards', this)"><span>🃏</span>Flashcards</button>
-      <button class="tab" onclick="switchTab('summarize', this)"><span>📝</span>Summarize</button>
-      <button class="tab" onclick="switchTab('studyplan', this)"><span>📅</span>Study Plan</button>
-    </div>
-
-    <!-- STUDY CHAT -->
-    <div id="chat2" class="section active">
+    <!-- GENERAL MODE -->
+    <div id="generalMode">
       <div class="card">
         <div class="quick-prompts">
-          <button class="quick-btn" onclick="quickPrompt2('Explain this topic in simple terms:')">📖 Explain topic</button>
-          <button class="quick-btn" onclick="quickPrompt2('Give me practice questions on:')">📝 Practice questions</button>
-          <button class="quick-btn" onclick="quickPrompt2('Summarize the key points of:')">🎯 Key points</button>
-          <button class="quick-btn" onclick="quickPrompt2('What are common mistakes in:')">⚠️ Common mistakes</button>
+          <button class="quick-btn" onclick="quickPrompt('Explain this concept simply:')">💡 Explain a concept</button>
+          <button class="quick-btn" onclick="quickPrompt('Write a short essay about:')">✍️ Write an essay</button>
+          <button class="quick-btn" onclick="quickPrompt('Give me tips for:')">🎯 Give me tips</button>
+          <button class="quick-btn" onclick="quickPrompt('What is the difference between')">🔄 Compare topics</button>
+          <button class="quick-btn" onclick="quickPrompt('Solve this problem:')">🧮 Solve a problem</button>
+          <button class="quick-btn" onclick="quickPrompt('Translate this to Hindi:')">🌐 Translate</button>
         </div>
-        <div class="chat-box" id="chatBox2"></div>
+        <div class="chat-box" id="chatBox"></div>
         <div class="chat-input">
-          <input id="chatInput2" placeholder="Ask a study question…" onkeydown="if(event.key==='Enter') sendChat2()" />
-          <button class="btn" onclick="sendChat2()">Send ➤</button>
+          <input id="chatInput" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter') sendChat()" />
+          <button class="btn" onclick="sendChat()">Send ➤</button>
         </div>
       </div>
     </div>
 
-    <!-- FLASHCARDS -->
-    <div id="flashcards" class="section">
-      <div class="card" id="fcSetup">
-        <div class="form-group">
-          <label>Topic</label>
-          <input id="fcTopic" placeholder="e.g. Photosynthesis, French Revolution, Calculus" />
+    <div class="app-container" style="display: flex; height: 100vh;">
+      <div id="sidebar"
+        style="width: 260px; background: #171717; border-right: 1px solid #333; padding: 20px; overflow-y: auto;">
+        <h3 style="color: white; margin-bottom: 20px;">Study History</h3>
+        <div id="history-sidebar-list">
         </div>
-        <div class="range-row">
-          <label>Number of cards</label>
-          <input type="range" min="3" max="15" value="5" id="fcCount" oninput="document.getElementById('fcCountVal').textContent=this.value" />
-          <span id="fcCountVal">5</span>
-        </div>
-        <button class="btn" id="fcBtn" onclick="generateCards()">Generate flashcards</button>
+        <button onclick="clearHistory()"
+          style="margin-top: 20px; background: transparent; border: 1px solid #444; color: #ff4d4d; width: 100%; cursor: pointer; padding: 8px;">Clear
+          All</button>
       </div>
-      <div id="fcPlayer" style="display:none">
+
+      <div class="main-content" style="flex-grow: 1; display: flex; flex-direction: column; background: #212121;">
+        <div id="chatBox" style="flex-grow: 1; overflow-y: auto; padding: 20px;">
+        </div>
+      </div>
+    </div>
+    
+    <!-- STUDY MODE -->
+    <div id="studyMode" style="display:none">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('chat2', this)"><span>💬</span>Chat</button>
+        <button class="tab" onclick="switchTab('flashcards', this)"><span>🃏</span>Flashcards</button>
+        <button class="tab" onclick="switchTab('summarize', this)"><span>📝</span>Summarize</button>
+        <button class="tab" onclick="switchTab('studyplan', this)"><span>📅</span>Study Plan</button>
+      </div>
+
+      <!-- STUDY CHAT -->
+      <div id="chat2" class="section active">
         <div class="card">
-          <div class="progress-bar">
-            <span id="fcProgress">Card 1 of 5</span>
-            <span id="fcScore">✓ 0 · ↺ 0</span>
+          <div class="quick-prompts">
+            <button class="quick-btn" onclick="quickPrompt2('Explain this topic in simple terms:')">📖 Explain
+              topic</button>
+            <button class="quick-btn" onclick="quickPrompt2('Give me practice questions on:')">📝 Practice
+              questions</button>
+            <button class="quick-btn" onclick="quickPrompt2('Summarize the key points of:')">🎯 Key points</button>
+            <button class="quick-btn" onclick="quickPrompt2('What are common mistakes in:')">⚠️ Common mistakes</button>
           </div>
-          <div class="fc-card" id="fcCard" onclick="flipCard()">
-            <div class="fc-label" id="fcLabel">Question</div>
-            <div class="fc-text" id="fcText"></div>
-            <div class="fc-hint" id="fcHint">tap to reveal answer</div>
-          </div>
-          <div class="fc-btns" id="fcBtns" style="display:none">
-            <button class="btn btn-outline" onclick="nextCard(false)">↺ Review again</button>
-            <button class="btn" onclick="nextCard(true)">✓ Got it</button>
-          </div>
-        </div>
-      </div>
-      <div id="fcDone" style="display:none">
-        <div class="card done-card">
-          <div class="emoji">🎉</div>
-          <h2>Session complete!</h2>
-          <p id="doneText"></p>
-          <div class="done-btns">
-            <button class="btn btn-outline" onclick="restartCards()">Restart</button>
-            <button class="btn" onclick="newTopic()">New topic</button>
+          <div class="chat-box" id="chatBox2"></div>
+          <div class="chat-input">
+            <input id="chatInput2" placeholder="Ask a study question…"
+              onkeydown="if(event.key==='Enter') sendChat2()" />
+            <button class="btn" onclick="sendChat2()">Send ➤</button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- SUMMARIZE -->
-    <div id="summarize" class="section">
-      <div class="card">
-        <div class="form-group">
-          <label>Paste your notes or text</label>
-          <textarea id="notesInput" placeholder="Paste lecture notes, textbook content, or any study material here…"></textarea>
+      <!-- FLASHCARDS -->
+      <div id="flashcards" class="section">
+        <div class="card" id="fcSetup">
+          <div class="form-group">
+            <label>Topic</label>
+            <input id="fcTopic" placeholder="e.g. Photosynthesis, French Revolution, Calculus" />
+          </div>
+          <div class="range-row">
+            <label>Number of cards</label>
+            <input type="range" min="3" max="15" value="5" id="fcCount"
+              oninput="document.getElementById('fcCountVal').textContent=this.value" />
+            <span id="fcCountVal">5</span>
+          </div>
+          <button class="btn" id="fcBtn" onclick="generateCards()">Generate flashcards</button>
         </div>
-        <button class="btn" id="sumBtn" onclick="summarizeNotes()">Summarize notes</button>
-        <div id="summaryResult" style="display:none">
-          <div class="result-label">Summary</div>
-          <div class="result" id="summaryText"></div>
+        <div id="fcPlayer" style="display:none">
+          <div class="card">
+            <div class="progress-bar">
+              <span id="fcProgress">Card 1 of 5</span>
+              <span id="fcScore">✓ 0 · ↺ 0</span>
+            </div>
+            <div class="fc-card" id="fcCard" onclick="flipCard()">
+              <div class="fc-label" id="fcLabel">Question</div>
+              <div class="fc-text" id="fcText"></div>
+              <div class="fc-hint" id="fcHint">tap to reveal answer</div>
+            </div>
+            <div class="fc-btns" id="fcBtns" style="display:none">
+              <button class="btn btn-outline" onclick="nextCard(false)">↺ Review again</button>
+              <button class="btn" onclick="nextCard(true)">✓ Got it</button>
+            </div>
+          </div>
+        </div>
+        <div id="fcDone" style="display:none">
+          <div class="card done-card">
+            <div class="emoji">🎉</div>
+            <h2>Session complete!</h2>
+            <p id="doneText"></p>
+            <div class="done-btns">
+              <button class="btn btn-outline" onclick="restartCards()">Restart</button>
+              <button class="btn" onclick="newTopic()">New topic</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- STUDY PLAN -->
-    <div id="studyplan" class="section">
-      <div class="card">
-        <div class="form-group">
-          <label>Subject</label>
-          <input id="spSubject" placeholder="e.g. Organic Chemistry, Data Structures, Spanish" />
+      <!-- SUMMARIZE -->
+      <div id="summarize" class="section">
+        <div class="card">
+          <div class="form-group">
+            <label>Paste your notes or text</label>
+            <textarea id="notesInput"
+              placeholder="Paste lecture notes, textbook content, or any study material here…"></textarea>
+          </div>
+          <button class="btn" id="sumBtn" onclick="summarizeNotes()">Summarize notes</button>
+          <div id="summaryResult" style="display:none">
+            <div class="result-label">Summary</div>
+            <div class="result" id="summaryText"></div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Goal / Exam (optional)</label>
-          <input id="spGoal" placeholder="e.g. JEE Mains, midterm exam, IELTS" />
-        </div>
-        <div class="range-row">
-          <label>Days to study</label>
-          <input type="range" min="3" max="30" value="7" id="spDays" oninput="document.getElementById('spDaysVal').textContent=this.value" />
-          <span id="spDaysVal">7</span>
-        </div>
-        <button class="btn" id="planBtn" onclick="generatePlan()">Create study plan</button>
-        <div id="planResult" style="display:none">
-          <div class="result-label">Your Study Plan</div>
-          <div class="result" id="planText"></div>
+      </div>
+
+      <!-- STUDY PLAN -->
+      <div id="studyplan" class="section">
+        <div class="card">
+          <div class="form-group">
+            <label>Subject</label>
+            <input id="spSubject" placeholder="e.g. Organic Chemistry, Data Structures, Spanish" />
+          </div>
+          <div class="form-group">
+            <label>Goal / Exam (optional)</label>
+            <input id="spGoal" placeholder="e.g. JEE Mains, midterm exam, IELTS" />
+          </div>
+          <div class="range-row">
+            <label>Days to study</label>
+            <input type="range" min="3" max="30" value="7" id="spDays"
+              oninput="document.getElementById('spDaysVal').textContent=this.value" />
+            <span id="spDaysVal">7</span>
+          </div>
+          <button class="btn" id="planBtn" onclick="generatePlan()">Create study plan</button>
+          <div id="planResult" style="display:none">
+            <div class="result-label">Your Study Plan</div>
+            <div class="result" id="planText"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="footer">Made with ❤️ · AI Assistant</div>
-
+  <div class="footer">Made with ❤️ · AI Assistant</div>
 
 
-<script>
-  // THEME
-  function toggleTheme() {
-    const html = document.documentElement;
-    const btn = document.getElementById("themeBtn");
-    if (html.getAttribute("data-theme") === "dark") {
-      html.setAttribute("data-theme", "light");
-      btn.textContent = "☀️ Light";
-    } else {
-      html.setAttribute("data-theme", "dark");
-      btn.textContent = "🌙 Dark";
+
+  <script>
+    // THEME
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById("themeBtn");
+      if (html.getAttribute("data-theme") === "dark") {
+        html.setAttribute("data-theme", "light");
+        btn.textContent = "☀️ Light";
+      } else {
+        html.setAttribute("data-theme", "dark");
+        btn.textContent = "🌙 Dark";
+      }
     }
-  }
 
-  // MODE
-  function switchMode(mode, el) {
-    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
-    el.classList.add("active");
-    document.getElementById("generalMode").style.display = mode === "general" ? "block" : "none";
-    document.getElementById("studyMode").style.display = mode === "study" ? "block" : "none";
-  }
+    // MODE
+    function switchMode(mode, el) {
+      document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+      el.classList.add("active");
+      document.getElementById("generalMode").style.display = mode === "general" ? "block" : "none";
+      document.getElementById("studyMode").style.display = mode === "study" ? "block" : "none";
+    }
 
-  // TABS
-  function switchTab(name, el) {
-    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.getElementById(name).classList.add("active");
-    el.classList.add("active");
-  }
+    // TABS
+    function switchTab(name, el) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.getElementById(name).classList.add("active");
+      el.classList.add("active");
+    }
 
-  // API
-  async function post(url, data) {
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-    return res.json();
-  }
+    // API
+    async function post(url, data) {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      return res.json();
+    }
 
-  // QUICK PROMPTS
-  function quickPrompt(text) {
-    document.getElementById("chatInput").value = text + " ";
-    document.getElementById("chatInput").focus();
-  }
+    // QUICK PROMPTS
+    function quickPrompt(text) {
+      document.getElementById("chatInput").value = text + " ";
+      document.getElementById("chatInput").focus();
+    }
 
-  function quickPrompt2(text) {
-    document.getElementById("chatInput2").value = text + " ";
-    document.getElementById("chatInput2").focus();
-  }
+    function quickPrompt2(text) {
+      document.getElementById("chatInput2").value = text + " ";
+      document.getElementById("chatInput2").focus();
+    }
 
-  // CHAT (General)
-  function addMsg(text, role, boxId) {
-    const box = document.getElementById(boxId);
-    const wrapper = document.createElement("div");
-    wrapper.style.display = "flex";
-    wrapper.style.flexDirection = "column";
-    wrapper.style.alignItems = role == "user" ? "flex-end" : "flex-start";
-    wrapper.style.gap = "4px";
+    // CHAT (General)
+    function addMsg(text, role, boxId) {
+      const box = document.getElementById(boxId);
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "flex";
+      wrapper.style.flexDirection = "column";
+      wrapper.style.alignItems = role == "user" ? "flex-end" : "flex-start";
+      wrapper.style.gap = "4px";
 
-}
+    }
 
     const div = document.createElement("div");
     div.className = `msg ${role}`;
     div.textContent = text;
     wrapper.appendChild(div);
-    
-   
 
     if (role === "ai") {
       const copyBtn = document.createElement("button");
       copyBtn.textContent = "📋 Copy";
-    copyBtn.style.cssText = `
+      copyBtn.style.cssText = `
         background: transparent;
         border: 1px solid var(--border2);
         border-radius: 6px;
@@ -579,8 +796,8 @@ x
         cursor: pointer;
         font-family: 'Inter', sans-serif;
         transition: all 0.2s;
-      `; 
-    copyBtn.onmouseover = () => { copyBtn.style.borderColor = "var(--accent)"; copyBtn.style.color = "var(--accent)"; };
+      `;
+      copyBtn.onmouseover = () => { copyBtn.style.borderColor = "var(--accent)"; copyBtn.style.color = "var(--accent)"; };
       copyBtn.onmouseout = () => { copyBtn.style.borderColor = "var(--border2)"; copyBtn.style.color = "var(--muted)"; };
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(div.textContent);
@@ -593,162 +810,163 @@ x
     box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
     return div;
-  };
-    
-  async function sendChat() {
-    const input = document.getElementById("chatInput");
-    const q = input.value.trim();
-    if (!q) return;
-    addMsg(q, "user", "chatBox");
-    input.value = "";
-    const thinking = addMsg("Thinking…", "thinking", "chatBox");
-    const data = await post("/chat", { question: q });
-    thinking.parentElement.remove();
-    addMsg(data.answer, "ai", "chatBox");
-  }
+  
 
-  // CHAT (Study)
-  async function sendChat2() {
-    const input = document.getElementById("chatInput2");
-    const q = input.value.trim();
-    if (!q) return;
-    addMsg(q, "user", "chatBox2");
-    input.value = "";
-    const thinking = addMsg("Thinking…", "thinking", "chatBox2");
-    const data = await post("/chat", { question: q });
-    thinking.parentElement.remove();
-    addMsg(data.answer, "ai", "chatBox2");
-  }
+    async function sendChat() {
+      const input = document.getElementById("chatInput");
+      const q = input.value.trim();
+      if (!q) return;
+      addMsg(q, "user", "chatBox");
+      input.value = "";
+      const thinking = addMsg("Thinking…", "thinking", "chatBox");
+      const data = await post("/chat", { question: q });
+      thinking.parentElement.remove();
+      addMsg(data.answer, "ai", "chatBox");
+    }
 
-  // FLASHCARDS
-  let cards = [], cardIndex = 0, flipped = false, score = { know: 0, review: 0 };
+    // CHAT (Study)
+    async function sendChat2() {
+      const input = document.getElementById("chatInput2");
+      const q = input.value.trim();
+      if (!q) return;
+      addMsg(q, "user", "chatBox2");
+      input.value = "";
+      const thinking = addMsg("Thinking…", "thinking", "chatBox2");
+      const data = await post("/chat", { question: q });
+      thinking.parentElement.remove();
+      addMsg(data.answer, "ai", "chatBox2");
+    }
 
-  async function generateCards() {
-    const topic = document.getElementById("fcTopic").value.trim();
-    const count = document.getElementById("fcCount").value;
-    if (!topic) return;
-    const btn = document.getElementById("fcBtn");
-    btn.textContent = "Generating…"; btn.disabled = true;
-    const data = await post("/flashcards", { topic, count: parseInt(count) });
-    try {
-      const clean = data.answer.replace(/```json|```/g, "").trim();
-      cards = JSON.parse(clean);
+    // FLASHCARDS
+    let cards = [], cardIndex = 0, flipped = false, score = { know: 0, review: 0 };
+
+    async function generateCards() {
+      const topic = document.getElementById("fcTopic").value.trim();
+      const count = document.getElementById("fcCount").value;
+      if (!topic) return;
+      const btn = document.getElementById("fcBtn");
+      btn.textContent = "Generating…"; btn.disabled = true;
+      const data = await post("/flashcards", { topic, count: parseInt(count) });
+      try {
+        const clean = data.answer.replace(/```json|```/g, "").trim();
+        cards = JSON.parse(clean);
+        cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
+        document.getElementById("fcSetup").style.display = "none";
+        document.getElementById("fcPlayer").style.display = "block";
+        showCard();
+      } catch { alert("Error parsing flashcards. Try again."); }
+      btn.textContent = "Generate flashcards"; btn.disabled = false;
+    }
+
+    function showCard() {
+      document.getElementById("fcText").textContent = cards[cardIndex].q;
+      document.getElementById("fcLabel").textContent = "Question";
+      document.getElementById("fcHint").style.display = "block";
+      document.getElementById("fcBtns").style.display = "none";
+      document.getElementById("fcProgress").textContent = `Card ${cardIndex + 1} of ${cards.length}`;
+      document.getElementById("fcScore").textContent = `✓ ${score.know} · ↺ ${score.review}`;
+      flipped = false;
+    }
+
+    function flipCard() {
+      if (flipped) return;
+      flipped = true;
+      document.getElementById("fcText").textContent = cards[cardIndex].a;
+      document.getElementById("fcLabel").textContent = "Answer";
+      document.getElementById("fcHint").style.display = "none";
+      document.getElementById("fcBtns").style.display = "flex";
+    }
+
+    function nextCard(know) {
+      score[know ? "know" : "review"]++;
+      cardIndex++;
+      if (cardIndex >= cards.length) {
+        document.getElementById("fcPlayer").style.display = "none";
+        document.getElementById("fcDone").style.display = "block";
+        document.getElementById("doneText").textContent = `Knew: ${score.know} · Review: ${score.review} of ${cards.length} cards`;
+      } else { showCard(); }
+    }
+
+    function restartCards() {
       cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
-      document.getElementById("fcSetup").style.display = "none";
+      document.getElementById("fcDone").style.display = "none";
       document.getElementById("fcPlayer").style.display = "block";
       showCard();
-    } catch { alert("Error parsing flashcards. Try again."); }
-    btn.textContent = "Generate flashcards"; btn.disabled = false;
-  }
+    }
 
-  function showCard() {
-    document.getElementById("fcText").textContent = cards[cardIndex].q;
-    document.getElementById("fcLabel").textContent = "Question";
-    document.getElementById("fcHint").style.display = "block";
-    document.getElementById("fcBtns").style.display = "none";
-    document.getElementById("fcProgress").textContent = `Card ${cardIndex + 1} of ${cards.length}`;
-    document.getElementById("fcScore").textContent = `✓ ${score.know} · ↺ ${score.review}`;
-    flipped = false;
-  }
+    function newTopic() {
+      document.getElementById("fcDone").style.display = "none";
+      document.getElementById("fcSetup").style.display = "block";
+      document.getElementById("fcTopic").value = "";
+    }
 
-  function flipCard() {
-    if (flipped) return;
-    flipped = true;
-    document.getElementById("fcText").textContent = cards[cardIndex].a;
-    document.getElementById("fcLabel").textContent = "Answer";
-    document.getElementById("fcHint").style.display = "none";
-    document.getElementById("fcBtns").style.display = "flex";
-  }
+    // SUMMARIZE
+    async function summarizeNotes() {
+      const notes = document.getElementById("notesInput").value.trim();
+      if (!notes) return;
+      const btn = document.getElementById("sumBtn");
+      btn.textContent = "Summarizing…"; btn.disabled = true;
+      const data = await post("/summarize", { notes });
+      document.getElementById("summaryText").textContent = data.answer;
+      document.getElementById("summaryResult").style.display = "block";
+      btn.textContent = "Summarize notes"; btn.disabled = false;
+    }
 
-  function nextCard(know) {
-    score[know ? "know" : "review"]++;
-    cardIndex++;
-    if (cardIndex >= cards.length) {
-      document.getElementById("fcPlayer").style.display = "none";
-      document.getElementById("fcDone").style.display = "block";
-      document.getElementById("doneText").textContent = `Knew: ${score.know} · Review: ${score.review} of ${cards.length} cards`;
-    } else { showCard(); }
-  }
+    // STUDY PLAN
+    async function generatePlan() {
+      const subject = document.getElementById("spSubject").value.trim();
+      const goal = document.getElementById("spGoal").value.trim();
+      const days = document.getElementById("spDays").value;
+      if (!subject) return;
+      const btn = document.getElementById("planBtn");
+      btn.textContent = "Building plan…"; btn.disabled = true;
+      const data = await post("/studyplan", { subject, goal, days: parseInt(days) });
+      document.getElementById("planText").textContent = data.answer;
+      document.getElementById("planResult").style.display = "block";
+      btn.textContent = "Create study plan"; btn.disabled = false;
 
-  function restartCards() {
-    cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
-    document.getElementById("fcDone").style.display = "none";
-    document.getElementById("fcPlayer").style.display = "block";
-    showCard();
-  }
-
-  function newTopic() {
-    document.getElementById("fcDone").style.display = "none";
-    document.getElementById("fcSetup").style.display = "block";
-    document.getElementById("fcTopic").value = "";
-  }
-
-  // SUMMARIZE
-  async function summarizeNotes() {
-    const notes = document.getElementById("notesInput").value.trim();
-    if (!notes) return;
-    const btn = document.getElementById("sumBtn");
-    btn.textContent = "Summarizing…"; btn.disabled = true;
-    const data = await post("/summarize", { notes });
-    document.getElementById("summaryText").textContent = data.answer;
-    document.getElementById("summaryResult").style.display = "block";
-    btn.textContent = "Summarize notes"; btn.disabled = false;
-  }
-
-  // STUDY PLAN
-  async function generatePlan() {
-    const subject = document.getElementById("spSubject").value.trim();
-    const goal = document.getElementById("spGoal").value.trim();
-    const days = document.getElementById("spDays").value;
-    if (!subject) return;
-    const btn = document.getElementById("planBtn");
-    btn.textContent = "Building plan…"; btn.disabled = true;
-    const data = await post("/studyplan", { subject, goal, days: parseInt(days) });
-    document.getElementById("planText").textContent = data.answer;
-    document.getElementById("planResult").style.display = "block";
-    btn.textContent = "Create study plan"; btn.disabled = false;
-
-async function loadHistory() {
-    try {
-        const res = await fetch("/history");
-        const data = await res.json();
-        const box = document.getElementById("chatBox");
-        if (data.messages && data.messages.length > 0) {
+      async function loadHistory() {
+        try {
+          const res = await fetch("/history");
+          const data = await res.json();
+          const box = document.getElementById("chatBox");
+          if (data.messages && data.messages.length > 0) {
             box.innerHTML = "";
             data.messages.forEach(m => {
-                const wrapper = document.createElement("div");
-                wrapper.style.display = "flex";
-                wrapper.style.flexDirection = "column";
-                wrapper.style.alignItems = m.role === "user" ? "flex-end" : "flex-start";
-                wrapper.style.gap = "4px";
-                const div = document.createElement("div");
-                div.className = `msg ${m.role}`;
-                div.textContent = m.content;
-                wrapper.appendChild(div);
-                box.appendChild(wrapper);
+              const wrapper = document.createElement("div");
+              wrapper.style.display = "flex";
+              wrapper.style.flexDirection = "column";
+              wrapper.style.alignItems = m.role === "user" ? "flex-end" : "flex-start";
+              wrapper.style.gap = "4px";
+              const div = document.createElement("div");
+              div.className = `msg ${m.role}`;
+              div.textContent = m.content;
+              wrapper.appendChild(div);
+              box.appendChild(wrapper);
             });
             box.scrollTop = box.scrollHeight;
+          }
+        } catch (e) {
+          console.log("History error:", e);
         }
-    } catch(e) { 
-        console.log("History error:", e); 
+      }
+
+      // Isse use karein taaki ensure ho ki page load hote hi trigger ho
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadHistory);
+      } else {
+        loadHistory();
+      }
+
+      async function clearHistory() {
+        await post("/clear", {});
+        document.getElementById("chatBox").innerHTML = "";
+        document.getElementById("chatBox2").innerHTML = "";
+      }
+
+
     }
-}
-
-// Isse use karein taaki ensure ho ki page load hote hi trigger ho
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadHistory);
-} else {
-    loadHistory();
-} 
-
-async function clearHistory() {
-    await post("/clear", {});
-    document.getElementById("chatBox").innerHTML = "";
-    document.getElementById("chatBox2").innerHTML = "";
-}
-
-
- }
-</script>
+  </script>
 </body>
+
 </html>
