@@ -913,47 +913,47 @@
       document.getElementById("planText").textContent = data.answer;
       document.getElementById("planResult").style.display = "block";
       btn.textContent = "Create study plan"; btn.disabled = false;
+    }                                                          // ✅ generatePlan ends here
 
-      async function loadHistory() {
-        try {
-          const res = await fetch("/history");
-          const data = await res.json();
-          const box = document.getElementById("chatBox");
-          if (data.messages && data.messages.length > 0) {
-            box.innerHTML = "";
-            data.messages.forEach(m => {
-              const wrapper = document.createElement("div");
-              wrapper.style.display = "flex";
-              wrapper.style.flexDirection = "column";
-              wrapper.style.alignItems = m.role === "user" ? "flex-end" : "flex-start";
-              wrapper.style.gap = "4px";
-              const div = document.createElement("div");
-              div.className = `msg ${m.role}`;
-              div.textContent = m.content;
-              wrapper.appendChild(div);
-              box.appendChild(wrapper);
-            });
-            box.scrollTop = box.scrollHeight;
-          }
-        } catch (e) {
-          console.log("History error:", e);
+    // LOAD HISTORY
+    async function loadHistory() {
+      try {
+        const res = await fetch("/history");
+        const data = await res.json();
+        const box = document.getElementById("chatBox");
+        if (data.messages && data.messages.length > 0) {
+          box.innerHTML = "";
+          data.messages.forEach(m => {
+            const wrapper = document.createElement("div");
+            wrapper.style.display = "flex";
+            wrapper.style.flexDirection = "column";
+            wrapper.style.alignItems = m.role === "user" ? "flex-end" : "flex-start";
+            wrapper.style.gap = "4px";
+            const div = document.createElement("div");
+            div.className = `msg ${m.role}`;
+            div.textContent = m.content;
+            wrapper.appendChild(div);
+            box.appendChild(wrapper);
+          });
+          box.scrollTop = box.scrollHeight;
         }
+      } catch (e) {
+        console.log("History error:", e);
       }
+    }
 
-      // Isse use karein taaki ensure ho ki page load hote hi trigger ho
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadHistory);
-      } else {
-        loadHistory();
-      }
+    // CLEAR HISTORY
+    async function clearHistory() {
+      await post("/clear", {});
+      document.getElementById("chatBox").innerHTML = "";
+      document.getElementById("chatBox2").innerHTML = "";
+    }
 
-      async function clearHistory() {
-        await post("/clear", {});
-        document.getElementById("chatBox").innerHTML = "";
-        document.getElementById("chatBox2").innerHTML = "";
-      }
-
-
+    // ON PAGE LOAD
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadHistory);
+    } else {
+      loadHistory();
     }
   </script>
 </body>
