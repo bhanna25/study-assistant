@@ -66,10 +66,13 @@
         .chat-area{
           width: 100%;
         }
-
+        .hamburger-btn {
+        display: none; /* Hide toggle button on desktop */
+        } 
         .message-text{
           font-size: 16px;
         }
+
       
     }
 
@@ -680,6 +683,29 @@
       renderSidebar();
       if (activeId && getActive()) loadSession(activeId);
     });
+
+    // 1. Select the elements
+  const sidebar = document.querySelector('.sidebar');
+  const menuBtn = document.querySelector('.menu-btn'); // You'll need to add this button to your HTML
+
+  // 2. The Toggle Function
+  function toggleSidebar() {
+    sidebar.classList.toggle('active');
+  }
+
+ // 3. Event Listener
+  if (menuBtn) {
+    menuBtn.addEventListener('click', toggleSidebar);
+  }
+
+ // 4. Close sidebar when clicking outside (Great for UX)
+ document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768) { // Only run on mobile
+        if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+        }
+    }
+   });  
   </script>
 </body>
 </html>
