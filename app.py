@@ -44,8 +44,6 @@ def home():
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
-    global pdf_chunks
-
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -60,16 +58,16 @@ def upload_file():
     try:
         loader = PyPDFLoader(filepath)
         pages = loader.load()
-
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         docs = text_splitter.split_documents(pages)
+        chunks = [doc.page_content for doc in docs]
 
-        pdf_chunks = [doc.page_content for doc in docs]
-
-        return jsonify({"message": f"Successfully indexed {filename}!"})
+        # Return chunks to frontend to store in browser
+        return jsonify({"message": f"Successfully indexed {filename}!", "chunks": chunks})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+     
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -117,14 +115,13 @@ def clear():
 
 @app.route("/ask-pdf", methods=["POST"])
 def ask_pdf():
-    global pdf_chunks
     question = request.json.get("question")
+    chunks = request.json.get("chunks", [])  # receive chunks from frontend
     
-    if not pdf_chunks:
+    if not chunks:
         return jsonify({"answer": "No PDF uploaded yet. Please upload a PDF first."})
     
-    # Use first 5 chunks as context
-    context = "\n\n".join(pdf_chunks[:5])
+    context = "\n\n".join(chunks[:5])
     prompt = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
     answer = ask_ai(prompt, "You are a helpful study assistant. Answer based on the provided document content only.")
     return jsonify({"answer": answer})

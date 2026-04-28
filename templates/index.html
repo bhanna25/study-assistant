@@ -475,6 +475,7 @@
   </div>
 
   <script>
+    let pdfchunks = [];
     let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
     let activeId = localStorage.getItem('activeChatId') || null;
 
@@ -627,7 +628,7 @@
       renderMsg(q, "user", "chatBox2");
       input.value = "";
       const thinking = renderMsg("Thinking…", "thinking", "chatBox2");
-      const data = await post("/ask-pdf", { question: q });
+      const data = await post("/ask-pdf", { question: q , chunks: pdfchunks});
       thinking.parentElement.remove();
       renderMsg(data.answer, "ai", "chatBox2");
     }
@@ -798,14 +799,9 @@ const statusInterval = setInterval(() => {
 
     clearInterval(statusInterval);
     
-    if (res.ok) {
-      // 3. Update the message to show success
-      statusMsg.innerHTML = `<div class="message-content">✅ <b>${file.name}</b> is indexed! You can now ask questions about its content.</div>`;
-    } else {
-      statusMsg.innerHTML = `<div class="message-content">❌ Error: ${data.error}</div>`;
-    }
-  } catch (err) {
-    statusMsg.innerHTML = `<div class="message-content">❌ Connection failed. Make sure your Python server is running.</div>`;
+   if (res.ok) {
+  pdfChunks = data.chunks || [];  // store chunks in browser
+  statusMsg.innerHTML = `<div class="message-content">✅ <b>${file.name}</b> is indexed! You can now ask questions about its content.</div>`;
   }
   
   // Clear the input so you can re-upload the same file if needed
