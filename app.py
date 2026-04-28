@@ -2,13 +2,11 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from groq import Groq
 import os
-import gc
 from supabase import create_client
 from werkzeug.utils import secure_filename
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+
 
 # Create a folder to store uploaded PDFs
 UPLOAD_FOLDER = 'uploads'
@@ -42,6 +40,11 @@ def home():
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
+    import gc
+    from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_community.vectorstores import FAISS
+
+
     global vector_db
     # Check if a file was actually sent
     if 'file' not in request.files:
