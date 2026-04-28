@@ -475,7 +475,7 @@
   </div>
 
   <script>
-    let pdfchunks = [];
+    let pdfChunks = [];
     let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
     let activeId = localStorage.getItem('activeChatId') || null;
 
@@ -791,22 +791,27 @@ const statusInterval = setInterval(() => {
 
   const formData = new FormData();
   formData.append('file', file);
-
+  
   try {
-    // 2. Send the file to your Python backend (/upload route)
     const res = await fetch('/upload', { method: 'POST', body: formData });
     const data = await res.json();
 
     clearInterval(statusInterval);
     
-   if (res.ok) {
-  pdfChunks = data.chunks || [];  // store chunks in browser
-  statusMsg.innerHTML = `<div class="message-content">✅ <b>${file.name}</b> is indexed! You can now ask questions about its content.</div>`;
+    if (res.ok) {
+      pdfChunks = data.chunks || [];
+      statusMsg.innerHTML = `<div class="message-content">✅ <b>${file.name}</b> is indexed! You can now ask questions about its content.</div>`;
+    } else {
+      statusMsg.innerHTML = `<div class="message-content">❌ Error: ${data.error}</div>`;
+    }
+  } catch (err) {
+    clearInterval(statusInterval);
+    statusMsg.innerHTML = `<div class="message-content">❌ Connection failed. Make sure your server is running.</div>`;
   }
-  
-  // Clear the input so you can re-upload the same file if needed
-  input.value = ''; 
+
+  input.value = '';
 }
+ 
   
   </script>
 </body>
