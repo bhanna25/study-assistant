@@ -115,5 +115,19 @@ def clear():
     db.table("messages").delete().neq("id", 0).execute()
     return jsonify({"status": "cleared"})
 
+@app.route("/ask-pdf", methods=["POST"])
+def ask_pdf():
+    global pdf_chunks
+    question = request.json.get("question")
+    
+    if not pdf_chunks:
+        return jsonify({"answer": "No PDF uploaded yet. Please upload a PDF first."})
+    
+    # Use first 5 chunks as context
+    context = "\n\n".join(pdf_chunks[:5])
+    prompt = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
+    answer = ask_ai(prompt, "You are a helpful study assistant. Answer based on the provided document content only.")
+    return jsonify({"answer": answer})
+
 if __name__ == "__main__":
     app.run(debug=True)
