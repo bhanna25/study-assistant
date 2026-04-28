@@ -628,7 +628,7 @@
       renderMsg(q, "user", "chatBox2");
       input.value = "";
       const thinking = renderMsg("Thinking…", "thinking", "chatBox2");
-      const data = await post("/ask-pdf", { question: q , chunks: pdfchunks});
+      const data = await post("/ask-pdf", { question: q , chunks: pdfChunks});
       thinking.parentElement.remove();
       renderMsg(data.answer, "ai", "chatBox2");
     }
