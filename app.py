@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from groq import Groq
 import os
+import gc
 from supabase import create_client
 from werkzeug.utils import secure_filename
 from langchain_community.document_loaders import PyPDFLoader
@@ -65,7 +66,11 @@ def upload_file():
         docs = text_splitter.split_documents(pages)
 
         # 4. Convert text chunks into searchable vectors (embeddings)
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2", 
+            model_kwargs={'device': 'cpu'}
+        )
+        gc.collect()
         
         # 5. Store them in the FAISS vector database
         vector_db = FAISS.from_documents(docs, embeddings)
