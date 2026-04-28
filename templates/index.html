@@ -48,33 +48,42 @@
       display:flex;
       height: 100dvh;
     }
-    @media (max-width: 768px) {
-        .sidebar{
-          position: fixed;
-          left: -100%;
-          width: 80%;
-          height: 100%;
-          z-index: 1000;
-          background: var(--surface);
-          transition: 0.3s ease;
-        }
+    
+.sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  transition: all 0.3s ease; /* Smooth transition */
+}
 
-        .sidebar.active{
-          left: 0;
-        }
+/* Desktop Collapse: Hides the sidebar completely */
+.sidebar.collapsed {
+  margin-left: -260px;
+  opacity: 0;
+  pointer-events: none;
+}
 
-        .chat-area{
-          width: 100%;
-        }
-        .hamburger-btn {
-        display: none; /* Hide toggle button on desktop */
-        } 
-        .message-text{
-          font-size: 16px;
-        }
+/* Mobile & Split-Screen logic */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -100%; /* Hide off-screen */
+    top: 62px; /* Start below header */
+    height: calc(100% - 62px);
+    z-index: 1000;
+  }
+  
+  .sidebar.active {
+    left: 0; /* Slide in */
+  }
 
-      
-    }
+  .hamburger-btn {
+    display: block !important;
+  }
+}
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.4s, color 0.4s; }
@@ -272,7 +281,8 @@
 <body>
 
   <div class="header">
-    <div class="header-left">
+    <div class="header-left"> 
+      <button class="hamburger-btn" onclick="toggleSidebar()"style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text); margin-right:10px;">☰</button>
       <div class="header-icon">🤖</div>
       <div>
         <h1>AI Assistant</h1>
@@ -686,26 +696,33 @@
 
     // 1. Select the elements
   const sidebar = document.querySelector('.sidebar');
-  const menuBtn = document.querySelector('.menu-btn'); // You'll need to add this button to your HTML
-
+  const menuBtn = document.querySelector('.hamburger-btn'); 
+  
   // 2. The Toggle Function
   function toggleSidebar() {
-    sidebar.classList.toggle('active');
+    if (window.innerWidth <= 768) {
+      // Mobile/Split-screen: Slide in/out
+      sidebar.classList.toggle('active');
+    } else {
+      // Desktop: Collapse/Expand
+      sidebar.classList.toggle('collapsed');
+    }
   }
 
- // 3. Event Listener
+  // 3. Event Listeners
   if (menuBtn) {
     menuBtn.addEventListener('click', toggleSidebar);
   }
 
- // 4. Close sidebar when clicking outside (Great for UX)
- document.addEventListener('click', (e) => {
-    if (window.innerWidth <= 768) { // Only run on mobile
-        if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && sidebar.classList.contains('active')) {
-            sidebar.classList.remove('active');
-        }
+  // 4. Close sidebar when clicking outside (Mobile only)
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768) {
+      if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+      }
     }
-   });  
+  });
+  
   </script>
 </body>
 </html>
