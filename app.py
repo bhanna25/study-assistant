@@ -3,6 +3,18 @@ from flask_cors import CORS
 from groq import Groq
 import os
 from supabase import create_client
+from werkzeug.utils import secure_filename
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+
+# Create a folder to store uploaded PDFs
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# This will store your searchable document data in memory
+vector_db = None
 
 app = Flask(__name__)
 CORS(app)
@@ -26,6 +38,42 @@ def ask_ai(prompt, system="You are a helpful study assistant."):
 @app.route("/")
 def home():
     return render_template("index.html")
+
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    global vector_db
+    # Check if a file was actually sent
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    # 1. Securely save the file to the 'uploads' folder
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(filepath)
+
+    try:
+        # 2. Load the PDF content
+        loader = PyPDFLoader(filepath)
+        pages = loader.load()
+
+        # 3. Split the text into smaller chunks (better for AI context)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        docs = text_splitter.split_documents(pages)
+
+        # 4. Convert text chunks into searchable vectors (embeddings)
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        
+        # 5. Store them in the FAISS vector database
+        vector_db = FAISS.from_documents(docs, embeddings)
+
+        return jsonify({"message": f"Successfully indexed {filename}!"})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/chat", methods=["POST"])
 def chat():

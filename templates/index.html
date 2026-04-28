@@ -322,12 +322,20 @@
               <button class="quick-btn" onclick="quickPrompt('Translate this to Hindi:')">🌐 Translate</button>
             </div>
             <div class="chat-box" id="chatBox"></div>
-            <div class="chat-input">
-              <input id="chatInput" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter') sendChat()" />
-              <button class="btn" onclick="sendChat()">Send ➤</button>
-            </div>
-          </div>
-        </div>
+            <div class="chat-input" style="position: relative; display: flex; align-items: center; padding: 10px; background: var(--surface); border-top: 1px solid var(--border);">
+  <button onclick="document.getElementById('chatFileInput').click()" 
+          style="position: absolute; left: 20px; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--accent); color: white; cursor: pointer; z-index: 10; font-weight: bold; font-size: 20px; display: flex; align-items: center; justify-content: center;">
+    +
+  </button>
+  
+  <input type="file" id="chatFileInput" accept=".pdf" style="display: none;" onchange="handleChatFileUpload(this, 'chatBox')" />
+  
+  <input id="chatInput" placeholder="Ask anything or attach a PDF..." 
+         onkeydown="if(event.key==='Enter') sendChat()" 
+         style="padding-left: 50px; flex: 1; height: 45px; border-radius: 25px; border: 1px solid var(--border); background: var(--bg); color: var(--text);" />
+         
+  <button class="btn" onclick="sendChat()" style="margin-left: 10px;">Send ➤</button>
+</div>
 
         <div id="studyMode" style="display:none">
           <div class="tabs">
@@ -346,12 +354,20 @@
                 <button class="quick-btn" onclick="quickPrompt2('What are common mistakes in:')">⚠️ Common mistakes</button>
               </div>
               <div class="chat-box" id="chatBox2"></div>
-              <div class="chat-input">
-                <input id="chatInput2" placeholder="Ask a study question…" onkeydown="if(event.key==='Enter') sendChat2()" />
-                <button class="btn" onclick="sendChat2()">Send ➤</button>
-              </div>
-            </div>
-          </div>
+              <div class="chat-input" style="position: relative; display: flex; align-items: center; padding: 10px; background: var(--surface); border-top: 1px solid var(--border);">
+  <button onclick="document.getElementById('chatFileInput2').click()" 
+          style="position: absolute; left: 20px; width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--accent); color: white; cursor: pointer; z-index: 10; font-weight: bold; font-size: 20px; display: flex; align-items: center; justify-content: center;">
+    +
+  </button>
+  
+  <input type="file" id="chatFileInput2" accept=".pdf" style="display: none;" onchange="handleChatFileUpload(this, 'chatBox2')" />
+  
+  <input id="chatInput2" placeholder="Ask a study question or attach notes..." 
+         onkeydown="if(event.key==='Enter') sendChat2()" 
+         style="padding-left: 50px; flex: 1; height: 45px; border-radius: 25px; border: 1px solid var(--border); background: var(--bg); color: var(--text);" />
+         
+  <button class="btn" onclick="sendChat2()" style="margin-left: 10px;">Send ➤</button>
+</div>
 
           <div id="flashcards" class="section">
             <div class="card" id="fcSetup">
@@ -722,6 +738,46 @@
       }
     }
   });
+
+  async function handleChatFileUpload(input, targetBoxId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const chatBox = document.getElementById(targetBoxId);
+  
+  // 1. Show a loading message in the chat
+  const statusMsg = document.createElement('div');
+  statusMsg.className = 'message bot-message';
+  statusMsg.innerHTML = `
+    <div class="message-content">
+      ⏳ <b>Reading document:</b> ${file.name}...<br>
+      <small style="opacity: 0.7;">Indexing for your GATE CSE studies.</small>
+    </div>
+  `;
+  chatBox.appendChild(statusMsg);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    // 2. Send the file to your Python backend (/upload route)
+    const res = await fetch('/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    
+    if (res.ok) {
+      // 3. Update the message to show success
+      statusMsg.innerHTML = `<div class="message-content">✅ <b>${file.name}</b> is indexed! You can now ask questions about its content.</div>`;
+    } else {
+      statusMsg.innerHTML = `<div class="message-content">❌ Error: ${data.error}</div>`;
+    }
+  } catch (err) {
+    statusMsg.innerHTML = `<div class="message-content">❌ Connection failed. Make sure your Python server is running.</div>`;
+  }
+  
+  // Clear the input so you can re-upload the same file if needed
+  input.value = ''; 
+}
   
   </script>
 </body>
