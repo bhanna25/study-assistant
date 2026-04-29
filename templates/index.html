@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Assistant</title>
+  <title>AI Study Assistant</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
   <style>
@@ -169,6 +169,20 @@
     }
     .action-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ── file type badge shown after attach ── */
+    .file-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--accent);
+      border-radius: 20px; padding: 4px 14px; font-size: 12px; color: var(--accent);
+      font-weight: 600; margin-bottom: 8px; max-width: 100%; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .file-badge button {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 14px; line-height: 1; padding: 0; flex-shrink: 0;
+    }
+    .file-badge button:hover { color: #ef4444; }
+
     .quick-prompts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
     .quick-btn {
       padding: 7px 15px; background: var(--surface2); border: 1px solid var(--border2);
@@ -178,17 +192,31 @@
     .quick-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--surface); box-shadow: 0 0 10px var(--accent-glow); transform: translateY(-1px); }
 
     .chat-input-area {
-      position: relative; display: flex; align-items: center;
+      position: relative; display: flex; flex-direction: column;
       padding: 10px; background: var(--surface); border-top: 1px solid var(--border);
       gap: 8px;
     }
+    .chat-input-row { display: flex; align-items: center; gap: 8px; }
+
+    /* The "+" attach button — now accepts multiple types */
     .attach-btn {
       width: 36px; height: 36px; border-radius: 50%; border: none;
       background: var(--accent); color: white; cursor: pointer;
       font-weight: bold; font-size: 20px; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s;
+      flex-shrink: 0; transition: all 0.2s; position: relative;
     }
     .attach-btn:hover { background: var(--accent2); transform: scale(1.05); }
+
+    /* Tooltip on hover */
+    .attach-btn::after {
+      content: "PDF · DOCX · TXT · Image";
+      position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+      background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px;
+      padding: 4px 10px; font-size: 11px; color: var(--muted); white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .attach-btn:hover::after { opacity: 1; }
+
     .chat-text-input {
       flex: 1; height: 45px; border-radius: 25px; border: 1px solid var(--border);
       background: var(--bg); color: var(--text); padding: 0 16px;
@@ -279,8 +307,8 @@
       <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
       <div class="header-icon">🤖</div>
       <div>
-        <h1>AI Assistant</h1>
-        <p>Powered by Groq · Always ready to help</p>
+        <h1>AI Study Assistant</h1>
+        <p>Powered by Groq · PDF · DOCX · Images · Text</p>
       </div>
     </div>
     <div class="header-right">
@@ -318,11 +346,26 @@
             </div>
             <div class="chat-box" id="chatBox"></div>
             <div class="chat-input-area">
-              <button class="attach-btn" onclick="document.getElementById('chatFileInput').click()">+</button>
-              <input type="file" id="chatFileInput" accept=".pdf" style="display:none;" onchange="handlePDFUpload(this, 'chatBox', 'chatInput', 'sendBtn1', 'stopBtn1')" />
-              <input class="chat-text-input" id="chatInput" placeholder="Ask anything or attach a PDF..." onkeydown="if(event.key==='Enter' && !isGenerating1) sendChat()" />
-              <button class="send-btn" id="sendBtn1" onclick="sendChat()">Send ➤</button>
-              <button class="stop-btn" id="stopBtn1" onclick="stopGeneration(1)">⏹ Stop</button>
+              <!-- file badge row (shown when a file is attached) -->
+              <div id="fileBadge1" style="display:none;">
+                <div class="file-badge">
+                  <span id="fileBadgeIcon1">📄</span>
+                  <span id="fileBadgeName1">file.pdf</span>
+                  <button onclick="clearAttachment(1)" title="Remove">✕</button>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <!-- Hidden file input — accepts all supported types -->
+                <input type="file" id="fileInput1"
+                  accept=".pdf,.docx,.txt,.md,.csv,image/jpeg,image/png,image/gif,image/webp"
+                  style="display:none;" onchange="handleAnyFile(this, 1)" />
+                <button class="attach-btn" onclick="document.getElementById('fileInput1').click()" title="Attach file">+</button>
+                <input class="chat-text-input" id="chatInput"
+                  placeholder="Ask anything, or attach a PDF / DOCX / image…"
+                  onkeydown="if(event.key==='Enter' && !isGenerating1) sendChat()" />
+                <button class="send-btn" id="sendBtn1" onclick="sendChat()">Send ➤</button>
+                <button class="stop-btn" id="stopBtn1" onclick="stopGeneration(1)">⏹ Stop</button>
+              </div>
             </div>
           </div>
         </div>
@@ -339,7 +382,7 @@
           <div id="chat2" class="section active">
             <div class="card">
               <div id="pdfBanner2" class="pdf-banner" style="display:none">
-                📄 <span id="pdfBannerName">PDF loaded</span> · Ask anything about it below
+                📄 <span id="pdfBannerName">file loaded</span> · Ask anything about it below
               </div>
               <div class="quick-prompts">
                 <button class="quick-btn" onclick="quickPrompt2('Explain this topic in simple terms:')">📖 Explain topic</button>
@@ -349,15 +392,29 @@
               </div>
               <div class="chat-box" id="chatBox2"></div>
               <div class="chat-input-area">
-                <button class="attach-btn" onclick="document.getElementById('chatFileInput2').click()">+</button>
-                <input type="file" id="chatFileInput2" accept=".pdf" style="display:none;" onchange="handlePDFUpload(this, 'chatBox2', 'chatInput2', 'sendBtn2', 'stopBtn2')" />
-                <input class="chat-text-input" id="chatInput2" placeholder="Ask a study question or attach a PDF..." onkeydown="if(event.key==='Enter' && !isGenerating2) sendChat2()" />
-                <button class="send-btn" id="sendBtn2" onclick="sendChat2()">Send ➤</button>
-                <button class="stop-btn" id="stopBtn2" onclick="stopGeneration(2)">⏹ Stop</button>
+                <div id="fileBadge2" style="display:none;">
+                  <div class="file-badge">
+                    <span id="fileBadgeIcon2">📄</span>
+                    <span id="fileBadgeName2">file.pdf</span>
+                    <button onclick="clearAttachment(2)" title="Remove">✕</button>
+                  </div>
+                </div>
+                <div class="chat-input-row">
+                  <input type="file" id="fileInput2"
+                    accept=".pdf,.docx,.txt,.md,.csv,image/jpeg,image/png,image/gif,image/webp"
+                    style="display:none;" onchange="handleAnyFile(this, 2)" />
+                  <button class="attach-btn" onclick="document.getElementById('fileInput2').click()" title="Attach file">+</button>
+                  <input class="chat-text-input" id="chatInput2"
+                    placeholder="Ask a study question or attach a file…"
+                    onkeydown="if(event.key==='Enter' && !isGenerating2) sendChat2()" />
+                  <button class="send-btn" id="sendBtn2" onclick="sendChat2()">Send ➤</button>
+                  <button class="stop-btn" id="stopBtn2" onclick="stopGeneration(2)">⏹ Stop</button>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Flashcards -->
           <div id="flashcards" class="section">
             <div class="card" id="fcSetup">
               <div class="form-group">
@@ -401,6 +458,7 @@
             </div>
           </div>
 
+          <!-- Summarize -->
           <div id="summarize" class="section">
             <div class="card">
               <div class="form-group">
@@ -415,6 +473,7 @@
             </div>
           </div>
 
+          <!-- Study Plan -->
           <div id="studyplan" class="section">
             <div class="card">
               <div class="form-group">
@@ -439,24 +498,30 @@
           </div>
         </div>
 
-        <div class="footer">Made with ❤️ · AI Assistant</div>
+        <div class="footer">Made with ❤️ · AI Study Assistant</div>
       </div>
     </main>
   </div>
 
   <script>
-    let pdfChunks = [];
-    let currentPdfName = '';
-    let isGenerating1 = false;
-    let isGenerating2 = false;
-    let abortController1 = null;
-    let abortController2 = null;
-
-    let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-    let activeId = localStorage.getItem('activeChatId') || null;
-
+    // ── State ────────────────────────────────────────────────────────────────
     marked.setOptions({ breaks: true, gfm: true });
 
+    // Per-chat attachment state: { type: 'pdf'|'doc'|'image', chunks?, content?, image_data?, mime_type?, filename }
+    let attachment1 = null;
+    let attachment2 = null;
+
+    // PDF chunks for backward-compat (also updated when PDF attached)
+    let pdfChunks = [];
+    let currentPdfName = '';
+
+    let isGenerating1 = false, isGenerating2 = false;
+    let abortController1 = null, abortController2 = null;
+
+    let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
+    let activeId  = localStorage.getItem('activeChatId') || null;
+
+    // ── Session management ───────────────────────────────────────────────────
     function saveSessions() {
       localStorage.setItem('chatSessions', JSON.stringify(sessions));
       localStorage.setItem('activeChatId', activeId || '');
@@ -510,18 +575,17 @@
 
     function pushMessage(role, content) {
       if (!activeId) createNewChat();
-      const session = getActive();
-      if (!session) return;
+      const session = getActive(); if (!session) return;
       session.messages.push({ role, content });
-      if (role === 'user' && session.messages.filter(m => m.role === 'user').length === 1) {
+      if (role === 'user' && session.messages.filter(m => m.role === 'user').length === 1)
         session.title = content.length > 35 ? content.slice(0, 35) + '…' : content;
-      }
       saveSessions(); renderSidebar();
     }
 
+    // ── UI helpers ───────────────────────────────────────────────────────────
     function toggleTheme() {
       const html = document.documentElement;
-      const btn = document.getElementById("themeBtn");
+      const btn  = document.getElementById("themeBtn");
       if (html.getAttribute("data-theme") === "dark") {
         html.setAttribute("data-theme", "light"); btn.textContent = "☀️ Light";
       } else {
@@ -533,7 +597,7 @@
       document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
       el.classList.add("active");
       document.getElementById("generalMode").style.display = mode === "general" ? "block" : "none";
-      document.getElementById("studyMode").style.display = mode === "study" ? "block" : "none";
+      document.getElementById("studyMode").style.display   = mode === "study"   ? "block" : "none";
     }
 
     function switchTab(name, el) {
@@ -543,7 +607,7 @@
       el.classList.add("active");
     }
 
-    function quickPrompt(text) { document.getElementById("chatInput").value = text + " "; document.getElementById("chatInput").focus(); }
+    function quickPrompt(text)  { document.getElementById("chatInput").value  = text + " "; document.getElementById("chatInput").focus(); }
     function quickPrompt2(text) { document.getElementById("chatInput2").value = text + " "; document.getElementById("chatInput2").focus(); }
 
     function renderMsg(text, role, boxId) {
@@ -553,16 +617,12 @@
       wrapper.style.cssText = `display:flex; flex-direction:column; align-items:${role === "user" ? "flex-end" : "flex-start"}; gap:6px;`;
       const div = document.createElement("div");
       div.className = `msg ${role}`;
-      if (role === "ai") {
-        div.innerHTML = marked.parse(text);
-      } else {
-        div.textContent = text;
-      }
+      div.innerHTML = role === "ai" ? marked.parse(text) : escapeHtml(text);
       wrapper.appendChild(div);
       if (role === "ai") {
-        const actions = document.createElement("div");
+        const actions  = document.createElement("div");
         actions.className = "msg-actions";
-        const copyBtn = document.createElement("button");
+        const copyBtn  = document.createElement("button");
         copyBtn.className = "action-btn"; copyBtn.textContent = "📋 Copy";
         copyBtn.onclick = () => { navigator.clipboard.writeText(text); copyBtn.textContent = "✅ Copied!"; setTimeout(() => copyBtn.textContent = "📋 Copy", 2000); };
         actions.appendChild(copyBtn);
@@ -573,6 +633,10 @@
       return { div, wrapper };
     }
 
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     function addMsg(text, role, boxId) {
       const result = renderMsg(text, role, boxId);
       if (boxId === 'chatBox' && role !== 'thinking') pushMessage(role, text);
@@ -580,11 +644,7 @@
     }
 
     async function post(url, data) {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
+      const res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data) });
       return res.json();
     }
 
@@ -605,6 +665,136 @@
       }
     }
 
+    // ── File badge helpers ───────────────────────────────────────────────────
+    const FILE_ICONS = { pdf:'📄', docx:'📝', doc:'📝', txt:'📃', md:'📃', csv:'📊', jpg:'🖼️', jpeg:'🖼️', png:'🖼️', gif:'🖼️', webp:'🖼️' };
+
+    function showFileBadge(chat, filename) {
+      const ext  = filename.split('.').pop().toLowerCase();
+      const icon = FILE_ICONS[ext] || '📎';
+      document.getElementById(`fileBadgeIcon${chat}`).textContent = icon;
+      document.getElementById(`fileBadgeName${chat}`).textContent = filename;
+      document.getElementById(`fileBadge${chat}`).style.display = 'block';
+    }
+
+    function clearAttachment(chat) {
+      if (chat === 1) { attachment1 = null; pdfChunks = []; currentPdfName = ''; document.getElementById('fileInput1').value = ''; }
+      else            { attachment2 = null; document.getElementById('fileInput2').value = ''; }
+      document.getElementById(`fileBadge${chat}`).style.display = 'none';
+      const banner = document.getElementById('pdfBanner2');
+      if (banner && chat === 2) banner.style.display = 'none';
+    }
+
+    // ── Universal file handler ───────────────────────────────────────────────
+    async function handleAnyFile(input, chat) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const boxId = chat === 1 ? 'chatBox' : 'chatBox2';
+      const chatBox = document.getElementById(boxId);
+
+      // Show processing status in chat
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:flex-start; gap:6px;';
+      const statusMsg = document.createElement('div');
+      statusMsg.className = 'msg ai';
+      statusMsg.textContent = '📂 Reading file…';
+      wrapper.appendChild(statusMsg);
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const statuses = ['📂 Reading file…', '🧠 Analysing content…', '⚡ Almost done…'];
+      let si = 0;
+      const statusInterval = setInterval(() => { si++; statusMsg.textContent = statuses[si % statuses.length]; }, 2000);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res  = await fetch('/upload-any', { method:'POST', body: formData });
+        const data = await res.json();
+        clearInterval(statusInterval);
+
+        if (!res.ok || data.error) {
+          statusMsg.textContent = `❌ Error: ${data.error || 'Upload failed'}`;
+          return;
+        }
+
+        // Store attachment state
+        const att = { type: data.type, filename: data.filename };
+        if (data.type === 'pdf')   { att.chunks = data.chunks; pdfChunks = data.chunks; currentPdfName = data.filename; }
+        if (data.type === 'doc')   { att.content = data.content; }
+        if (data.type === 'image') { att.image_data = data.image_data; att.mime_type = data.mime_type; }
+
+        if (chat === 1) attachment1 = att;
+        else            attachment2 = att;
+
+        showFileBadge(chat, data.filename);
+
+        // Show banner for study chat
+        if (chat === 2) {
+          const banner = document.getElementById('pdfBanner2');
+          banner.style.display = 'flex';
+          document.getElementById('pdfBannerName').textContent = data.filename;
+        }
+
+        // Auto-summarise text documents; describe images
+        statusMsg.textContent = '⚡ Generating summary…';
+        let summaryAnswer = '';
+
+        if (data.type === 'pdf') {
+          const sr = await fetch('/ask-pdf', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ question: "Give me a structured summary: 1) Brief overview (2-3 sentences), 2) Key topics as bullet points, 3) Most important takeaways.", chunks: data.chunks }) });
+          const sd = await sr.json();
+          summaryAnswer = sd.answer;
+        } else if (data.type === 'doc') {
+          const sr = await fetch('/ask-doc', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ question: "Give me a structured summary: 1) Brief overview, 2) Key points as bullet points, 3) Important takeaways.", content: data.content, filename: data.filename }) });
+          const sd = await sr.json();
+          summaryAnswer = sd.answer;
+        } else if (data.type === 'image') {
+          const sr = await fetch('/ask-image', { method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ question: "Describe this image in detail. What does it show?", image_data: data.image_data, mime_type: data.mime_type }) });
+          const sd = await sr.json();
+          summaryAnswer = sd.answer;
+        }
+
+        // Replace status with summary
+        wrapper.removeChild(statusMsg);
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'msg ai';
+        summaryDiv.innerHTML = `<strong>${FILE_ICONS[data.filename.split('.').pop().toLowerCase()] || '📎'} ${data.filename}</strong><br><br>` + marked.parse(summaryAnswer);
+        wrapper.appendChild(summaryDiv);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'action-btn'; copyBtn.textContent = '📋 Copy';
+        copyBtn.onclick = () => { navigator.clipboard.writeText(summaryAnswer); copyBtn.textContent = '✅ Copied!'; setTimeout(() => copyBtn.textContent = '📋 Copy', 2000); };
+        wrapper.appendChild(copyBtn);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+      } catch (err) {
+        clearInterval(statusInterval);
+        statusMsg.textContent = '❌ Upload failed. Make sure the server is running.';
+      }
+      input.value = '';
+    }
+
+    // ── Build payload for sending a message ─────────────────────────────────
+    async function buildPayload(question, att) {
+      if (!att) return { endpoint: '/chat', payload: { question } };
+
+      if (att.type === 'pdf')
+        return { endpoint: '/ask-pdf', payload: { question, chunks: att.chunks } };
+
+      if (att.type === 'doc')
+        return { endpoint: '/ask-doc', payload: { question, content: att.content, filename: att.filename } };
+
+      if (att.type === 'image')
+        return { endpoint: '/ask-image', payload: { question, image_data: att.image_data, mime_type: att.mime_type } };
+
+      return { endpoint: '/chat', payload: { question } };
+    }
+
+    // ── sendChat (general mode) ──────────────────────────────────────────────
     async function sendChat() {
       if (isGenerating1) return;
       const input = document.getElementById("chatInput");
@@ -616,9 +806,8 @@
       const thinking = renderMsg("Thinking…", "thinking", "chatBox");
       abortController1 = new AbortController();
       try {
-        const endpoint = pdfChunks.length > 0 ? "/ask-pdf" : "/chat";
-        const payload = pdfChunks.length > 0 ? { question: q, chunks: pdfChunks } : { question: q };
-        const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: abortController1.signal });
+        const { endpoint, payload } = await buildPayload(q, attachment1);
+        const res  = await fetch(endpoint, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload), signal: abortController1.signal });
         const data = await res.json();
         if (thinking.div) thinking.div.parentElement.remove();
         addMsg(data.answer, "ai", "chatBox");
@@ -630,6 +819,7 @@
       setGenerating(1, false);
     }
 
+    // ── sendChat2 (study mode) ───────────────────────────────────────────────
     async function sendChat2() {
       if (isGenerating2) return;
       const input = document.getElementById("chatInput2");
@@ -641,9 +831,8 @@
       const thinking = renderMsg("Thinking…", "thinking", "chatBox2");
       abortController2 = new AbortController();
       try {
-        const endpoint = pdfChunks.length > 0 ? "/ask-pdf" : "/chat";
-        const payload = pdfChunks.length > 0 ? { question: q, chunks: pdfChunks } : { question: q };
-        const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: abortController2.signal });
+        const { endpoint, payload } = await buildPayload(q, attachment2);
+        const res  = await fetch(endpoint, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload), signal: abortController2.signal });
         const data = await res.json();
         if (thinking.div) thinking.div.parentElement.remove();
         renderMsg(data.answer, "ai", "chatBox2");
@@ -655,75 +844,8 @@
       setGenerating(2, false);
     }
 
-    async function handlePDFUpload(input, boxId, inputId, sendBtnId, stopBtnId) {
-      const file = input.files[0];
-      if (!file) return;
-      const chatBox = document.getElementById(boxId);
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'display:flex; flex-direction:column; align-items:flex-start; gap:6px;';
-      const statusMsg = document.createElement('div');
-      statusMsg.className = 'msg ai';
-      statusMsg.textContent = '📄 Reading document...';
-      wrapper.appendChild(statusMsg);
-      chatBox.appendChild(wrapper);
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      const statuses = ["📄 Reading document...", "🧠 Analyzing content...", "⚡ Almost done..."];
-      let i = 0;
-      const statusInterval = setInterval(() => { i++; statusMsg.textContent = statuses[i % statuses.length]; }, 2000);
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const res = await fetch('/upload', { method: 'POST', body: formData });
-        const data = await res.json();
-        clearInterval(statusInterval);
-
-        if (res.ok) {
-          pdfChunks = data.chunks || [];
-          currentPdfName = file.name;
-
-          const banner = document.getElementById('pdfBanner2');
-          if (banner) { banner.style.display = 'flex'; document.getElementById('pdfBannerName').textContent = file.name; }
-
-          statusMsg.textContent = '⚡ Generating summary...';
-
-          const summaryRes = await fetch('/ask-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              question: "Give me a structured summary of this document with: 1) A brief overview (2-3 sentences), 2) Key topics covered as bullet points, 3) Most important takeaways.",
-              chunks: pdfChunks
-            })
-          });
-          const summaryData = await summaryRes.json();
-
-          wrapper.removeChild(statusMsg);
-          const summaryDiv = document.createElement('div');
-          summaryDiv.className = 'msg ai';
-          summaryDiv.innerHTML = `<strong>📄 ${file.name}</strong><br><br>` + marked.parse(summaryData.answer);
-          wrapper.appendChild(summaryDiv);
-
-          const copyBtn = document.createElement('button');
-          copyBtn.className = 'action-btn'; copyBtn.textContent = '📋 Copy';
-          copyBtn.onclick = () => { navigator.clipboard.writeText(summaryData.answer); copyBtn.textContent = '✅ Copied!'; setTimeout(() => copyBtn.textContent = '📋 Copy', 2000); };
-          wrapper.appendChild(copyBtn);
-          chatBox.scrollTop = chatBox.scrollHeight;
-          document.getElementById(inputId).focus();
-
-        } else {
-          clearInterval(statusInterval);
-          statusMsg.textContent = `❌ Error: ${data.error}`;
-        }
-      } catch (err) {
-        clearInterval(statusInterval);
-        statusMsg.textContent = '❌ Upload failed. Make sure the server is running.';
-      }
-      input.value = '';
-    }
-
-    let cards = [], cardIndex = 0, flipped = false, score = { know: 0, review: 0 };
+    // ── Study tools ──────────────────────────────────────────────────────────
+    let cards = [], cardIndex = 0, flipped = false, score = { know:0, review:0 };
 
     async function generateCards() {
       const topic = document.getElementById("fcTopic").value.trim();
@@ -734,8 +856,8 @@
       const data = await post("/flashcards", { topic, count: parseInt(count) });
       try {
         cards = JSON.parse(data.answer.replace(/```json|```/g, "").trim());
-        cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
-        document.getElementById("fcSetup").style.display = "none";
+        cardIndex = 0; flipped = false; score = { know:0, review:0 };
+        document.getElementById("fcSetup").style.display  = "none";
         document.getElementById("fcPlayer").style.display = "block";
         showCard();
       } catch { alert("Error parsing flashcards. Try again."); }
@@ -743,19 +865,19 @@
     }
 
     function showCard() {
-      document.getElementById("fcText").textContent = cards[cardIndex].q;
-      document.getElementById("fcLabel").textContent = "Question";
-      document.getElementById("fcHint").style.display = "block";
-      document.getElementById("fcBtns").style.display = "none";
+      document.getElementById("fcText").textContent     = cards[cardIndex].q;
+      document.getElementById("fcLabel").textContent    = "Question";
+      document.getElementById("fcHint").style.display   = "block";
+      document.getElementById("fcBtns").style.display   = "none";
       document.getElementById("fcProgress").textContent = `Card ${cardIndex + 1} of ${cards.length}`;
-      document.getElementById("fcScore").textContent = `✓ ${score.know} · ↺ ${score.review}`;
+      document.getElementById("fcScore").textContent    = `✓ ${score.know} · ↺ ${score.review}`;
       flipped = false;
     }
 
     function flipCard() {
       if (flipped) return; flipped = true;
-      document.getElementById("fcText").textContent = cards[cardIndex].a;
-      document.getElementById("fcLabel").textContent = "Answer";
+      document.getElementById("fcText").textContent   = cards[cardIndex].a;
+      document.getElementById("fcLabel").textContent  = "Answer";
       document.getElementById("fcHint").style.display = "none";
       document.getElementById("fcBtns").style.display = "flex";
     }
@@ -765,20 +887,20 @@
       cardIndex++;
       if (cardIndex >= cards.length) {
         document.getElementById("fcPlayer").style.display = "none";
-        document.getElementById("fcDone").style.display = "block";
-        document.getElementById("doneText").textContent = `Knew: ${score.know} · Review: ${score.review} of ${cards.length} cards`;
+        document.getElementById("fcDone").style.display   = "block";
+        document.getElementById("doneText").textContent   = `Knew: ${score.know} · Review: ${score.review} of ${cards.length} cards`;
       } else { showCard(); }
     }
 
     function restartCards() {
-      cardIndex = 0; flipped = false; score = { know: 0, review: 0 };
-      document.getElementById("fcDone").style.display = "none";
+      cardIndex = 0; flipped = false; score = { know:0, review:0 };
+      document.getElementById("fcDone").style.display   = "none";
       document.getElementById("fcPlayer").style.display = "block";
       showCard();
     }
 
     function newTopic() {
-      document.getElementById("fcDone").style.display = "none";
+      document.getElementById("fcDone").style.display  = "none";
       document.getElementById("fcSetup").style.display = "block";
       document.getElementById("fcTopic").value = "";
     }
@@ -789,21 +911,21 @@
       const btn = document.getElementById("sumBtn");
       btn.textContent = "Summarizing…"; btn.disabled = true;
       const data = await post("/summarize", { notes });
-      document.getElementById("summaryText").textContent = data.answer;
+      document.getElementById("summaryText").textContent    = data.answer;
       document.getElementById("summaryResult").style.display = "block";
       btn.textContent = "Summarize notes"; btn.disabled = false;
     }
 
     async function generatePlan() {
       const subject = document.getElementById("spSubject").value.trim();
-      const goal = document.getElementById("spGoal").value.trim();
-      const days = document.getElementById("spDays").value;
+      const goal    = document.getElementById("spGoal").value.trim();
+      const days    = document.getElementById("spDays").value;
       if (!subject) return;
       const btn = document.getElementById("planBtn");
       btn.textContent = "Building plan…"; btn.disabled = true;
       const data = await post("/studyplan", { subject, goal, days: parseInt(days) });
-      document.getElementById("planText").textContent = data.answer;
-      document.getElementById("planResult").style.display = "block";
+      document.getElementById("planText").textContent      = data.answer;
+      document.getElementById("planResult").style.display  = "block";
       btn.textContent = "Create study plan"; btn.disabled = false;
     }
 
@@ -811,7 +933,7 @@
       await post("/clear", {});
       sessions = []; activeId = null;
       saveSessions(); renderSidebar();
-      document.getElementById("chatBox").innerHTML = "";
+      document.getElementById("chatBox").innerHTML  = "";
       document.getElementById("chatBox2").innerHTML = "";
     }
 
