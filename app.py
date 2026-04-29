@@ -7,19 +7,13 @@ from werkzeug.utils import secure_filename
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-
-
-
-# Create a folder to store uploaded PDFs
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# This will store your searchable document data in memory
-pdf_chunks=[]
 
 app = Flask(__name__)
 CORS(app)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 supabase_url = os.environ.get("SUPABASE_URL")
@@ -40,8 +34,6 @@ def ask_ai(prompt, system="You are a helpful study assistant."):
 def home():
     return render_template("index.html")
 
-
-
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:
@@ -58,28 +50,44 @@ def upload_file():
     try:
         loader = PyPDFLoader(filepath)
         pages = loader.load()
+
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         docs = text_splitter.split_documents(pages)
+
         chunks = [doc.page_content for doc in docs]
 
-        # Return chunks to frontend to store in browser
-        return jsonify({"message": f"Successfully indexed {filename}!", "chunks": chunks})
+        return jsonify({
+            "message": f"Successfully indexed {filename}!",
+            "chunks": chunks
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-     
+
+@app.route("/ask-pdf", methods=["POST"])
+def ask_pdf():
+    question = request.json.get("question")
+    chunks = request.json.get("chunks", [])
+
+    if not chunks:
+        return jsonify({"answer": "No PDF uploaded yet. Please upload a PDF first."})
+
+    context = "\n\n".join(chunks[:6])
+    prompt = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
+    answer = ask_ai(prompt, "You are a helpful study assistant. Answer based on the provided document content only. Use markdown formatting with headers, bullet points, and bold text where appropriate.")
+    return jsonify({"answer": answer})
 
 @app.route("/chat", methods=["POST"])
 def chat():
     question = request.json.get("question")
     try:
-        answer = ask_ai(question, "You are a helpful AI assistant. Answer any question clearly.")
+        answer = ask_ai(question, "You are a helpful AI assistant. Answer any question clearly. Use markdown formatting with headers, bullet points, and bold text where appropriate.")
         db.table("messages").insert({"role": "user", "content": question}).execute()
         db.table("messages").insert({"role": "ai", "content": answer}).execute()
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"answer": f"Error: {str(e)}"})
-    
+
 @app.route("/summarize", methods=["POST"])
 def summarize():
     notes = request.json.get("notes")
@@ -112,19 +120,6 @@ def history():
 def clear():
     db.table("messages").delete().neq("id", 0).execute()
     return jsonify({"status": "cleared"})
-
-@app.route("/ask-pdf", methods=["POST"])
-def ask_pdf():
-    question = request.json.get("question")
-    chunks = request.json.get("chunks", [])  # receive chunks from frontend
-    
-    if not chunks:
-        return jsonify({"answer": "No PDF uploaded yet. Please upload a PDF first."})
-    
-    context = "\n\n".join(chunks[:5])
-    prompt = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
-    answer = ask_ai(prompt, "You are a helpful study assistant. Answer based on the provided document content only.")
-    return jsonify({"answer": answer})
 
 if __name__ == "__main__":
     app.run(debug=True)
