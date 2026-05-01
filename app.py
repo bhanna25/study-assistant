@@ -241,14 +241,15 @@ def upload_any():
     
 @app.route("/auth/signup", methods=["POST"])
 def signup():
-    data = request.json                    # ← 4 spaces
-    email = data.get("email")             # ← 4 spaces
-    password = data.get("password")       # ← 4 spaces
-    try:                                   # ← 4 spaces
-        res = db.auth.sign_up(...)        # ← 8 spaces
-        return jsonify(...)               # ← 8 spaces
-    except Exception as e:                # ← 4 spaces
-        return jsonify(...)               # ← 8 space
+    data = request.json
+    email = data.get("email")
+    password = data.get("password")
+    try:
+        res = db.auth.sign_up({"email": email, "password": password})
+        return jsonify({"message": "Account created! Please check email.", "user": email})
+    except Exception as e:
+        print("SIGNUP ERROR:", str(e))
+        return jsonify({"error": str(e)}), 400
     
 
 @app.route("/auth/login", methods=["POST"])
