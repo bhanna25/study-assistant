@@ -238,6 +238,37 @@ def upload_any():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/auth/signup", methods=["POST"])
+def signup():
+    data = request.json                    # ← 4 spaces
+    email = data.get("email")             # ← 4 spaces
+    password = data.get("password")       # ← 4 spaces
+    try:                                   # ← 4 spaces
+        res = db.auth.sign_up(...)        # ← 8 spaces
+        return jsonify(...)               # ← 8 spaces
+    except Exception as e:                # ← 4 spaces
+        return jsonify(...)               # ← 8 space
+    
+
+@app.route("/auth/login", methods=["POST"])
+def login():
+    data = request.json
+    email = data.get("email")
+    password = data.get("password")
+    try:
+        res = db.auth.sign_in_with_password({"email": email, "password": password})
+        return jsonify({"token": res.session.access_token, "user": res.user.email})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
+
+@app.route("/auth/logout", methods=["POST"])
+def logout():
+    try:
+        db.auth.sign_out()
+        return jsonify({"message": "Logged out"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 
 # ---------- General chat ----------

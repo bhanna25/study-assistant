@@ -298,11 +298,67 @@
       padding: 10px 16px; margin-bottom: 12px; font-size: 13px;
       display: flex; align-items: center; gap: 8px; color: var(--accent);
     }
+
+    .auth-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; backdrop-filter: blur(6px);
+}
+.auth-box {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 2.5rem; width: 360px;
+  box-shadow: var(--shadow);
+}
+.auth-box h2 { font-size: 22px; margin-bottom: 6px; }
+.auth-box p  { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+.auth-tabs   { display: flex; gap: 8px; margin-bottom: 20px; }
+.auth-tab    {
+  flex: 1; padding: 9px; border: 1px solid var(--border2);
+  border-radius: 10px; background: transparent; color: var(--muted);
+  font-family: 'Inter', sans-serif; cursor: pointer; font-size: 13px;
+}
+.auth-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.auth-error  { color: #ef4444; font-size: 12px; margin-top: 8px; min-height: 18px; }
+.user-chip   {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 6px 14px; font-size: 12px;
+  color: var(--muted); display: flex; align-items: center; gap: 8px;
+}
+.user-chip button {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 11px; font-family: 'Inter', sans-serif;
+}
+.user-chip button:hover { color: #ef4444; }
   </style>
 </head>
 <body>
 
+    <!-- Auth Overlay -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <h2>👋 Welcome</h2>
+    <p>Sign in to save your chats and access all features.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="you@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="••••••••" />
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <button class="btn" style="width:100%; margin-top:12px;" onclick="submitAuth()">
+      Continue
+    </button>
+  </div>
+</div>
+
   <div class="header">
+
     <div class="header-left">
       <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
       <div class="header-icon">🤖</div>
@@ -312,11 +368,15 @@
       </div>
     </div>
     <div class="header-right">
-      <div class="status-dot"></div>
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
-      <button class="theme-toggle" onclick="clearHistory()">🗑️ Clear</button>
-    </div>
+  <div class="status-dot"></div>
+  <!-- user chip shown after login -->
+  <div class="user-chip" id="userChip" style="display:none;">
+    <span id="userEmail">user@email.com</span>
+    <button onclick="logoutUser()">Logout</button>
   </div>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+  <button class="theme-toggle" onclick="clearHistory()">🗑️ Clear</button>
+</div>
 
   <div class="app-container">
     <aside class="sidebar" id="sidebar">
@@ -506,6 +566,75 @@
   <script>
     // ── State ────────────────────────────────────────────────────────────────
     marked.setOptions({ breaks: true, gfm: true });
+
+    // ── Auth ────────────────────────────────────────────────────────────────────
+let currentAuthMode = 'login';
+let currentUser = null;
+
+function switchAuthTab(mode) {
+  currentAuthMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (mode === 'login' && i === 0) || (mode === 'signup' && i === 1));
+  });
+  document.getElementById('authError').textContent = '';
+}
+
+async function submitAuth() {
+  const email    = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl    = document.getElementById('authError');
+  errEl.textContent = '';
+
+  if (!email || !password) { errEl.textContent = 'Please fill in both fields.'; return; }
+
+  const endpoint = currentAuthMode === 'login' ? '/auth/login' : '/auth/signup';
+  try {
+    const res  = await fetch(endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { errEl.textContent = data.error || 'Something went wrong.'; return; }
+
+    if (currentAuthMode === 'signup') {
+      errEl.style.color = '#22c55e';
+      errEl.textContent = '✅ ' + (data.message || 'Account created! You can now login.');
+      switchAuthTab('login');
+      return;
+    }
+
+    // Login success
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('authUser',  data.user);
+    currentUser = data.user;
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('userChip').style.display    = 'flex';
+    document.getElementById('userEmail').textContent     = data.user;
+  } catch (e) {
+    errEl.textContent = 'Network error. Is the server running?';
+  }
+}
+
+async function logoutUser() {
+  await fetch('/auth/logout', { method: 'POST' });
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('authUser');
+  currentUser = null;
+  document.getElementById('userChip').style.display    = 'none';
+  document.getElementById('authOverlay').style.display = 'flex';
+}
+
+// Check if already logged in on page load
+(function checkExistingSession() {
+  const token = localStorage.getItem('authToken');
+  const user  = localStorage.getItem('authUser');
+  if (token && user) {
+    currentUser = user;
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('userChip').style.display    = 'flex';
+    document.getElementById('userEmail').textContent     = user;
+  }
+})();
 
     // Per-chat attachment state: { type: 'pdf'|'doc'|'image', chunks?, content?, image_data?, mime_type?, filename }
     let attachment1 = null;
