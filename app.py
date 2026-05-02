@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flask import Response, stream_with_context
 from flask_cors import CORS
 from groq import Groq
 import os
@@ -59,7 +60,6 @@ def extract_text_from_txt(filepath):
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 # ---------- PDF upload + chunk-based QA ----------
 
@@ -288,7 +288,59 @@ def chat():
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"answer": f"Error: {str(e)}"})
+    
 
+@app.route("/chat-stream", methods=["POST"])
+def chat_stream():
+    question = request.json.get("question")
+    chunks   = request.json.get("chunks", [])
+    content  = request.json.get("content", "")
+    image_data = request.json.get("image_data")
+    mime_type  = request.json.get("mime_type", "image/jpeg")
+    filename   = request.json.get("filename", "document")
+
+    # Build messages based on what's attached
+    if chunks:
+        context = "\n\n".join(chunks[:6])
+        user_msg = f"Based on this document:\n\n{context}\n\nAnswer: {question}"
+        messages = [{"role": "user", "content": user_msg}]
+    elif content:
+        truncated = content[:12000]
+        user_msg = f"Document: {filename}\n\n{truncated}\n\nQuestion: {question}"
+        messages = [{"role": "user", "content": user_msg}]
+    elif image_data:
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_data}"}},
+                {"type": "text", "text": question}
+            ]
+        }]
+    else:
+        messages = [{"role": "user", "content": question}]
+
+    system = "You are a helpful AI assistant. Use markdown formatting where appropriate."
+
+   
+def generate():
+        stream = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system},
+                *messages
+            ],
+            stream=True
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
+
+return Response(stream_with_context(generate()), mimetype="text/plain")
 
 # ---------- Study tools ----------
 
