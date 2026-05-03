@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, Response, stream_with_context
+from flask import Flask, request, jsonify, render_template, Response, stream_with_context, session
 from flask_cors import CORS
 from groq import Groq
 import os
@@ -18,6 +18,7 @@ app = Flask(__name__)
 CORS(app)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 MB upload limit
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
@@ -70,6 +71,70 @@ def extract_text_from_txt(filepath):
     """Read a plain-text or markdown file."""
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
         return f.read()
+
+
+# ── Auth routes ───────────────────────────────────────────────────────────────
+
+@app.route("/auth/signup", methods=["POST"])
+def auth_signup():
+    data     = request.json
+    name     = data.get("name", "").strip()
+    email    = data.get("email", "").strip()
+    password = data.get("password", "")
+
+    if not name or not email or not password:
+        return jsonify({"error": "All fields are required."}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters."}), 400
+
+    try:
+        res = db.auth.sign_up({"email": email, "password": password, "options": {"data": {"name": name}}})
+        if res.user:
+            return jsonify({"message": "Account created! Please login."})
+        return jsonify({"error": "Signup failed. Try again."}), 400
+    except Exception as e:
+        err = str(e)
+        if "already registered" in err.lower() or "already been registered" in err.lower():
+            return jsonify({"error": "Email already registered."}), 400
+        return jsonify({"error": err}), 400
+
+
+@app.route("/auth/login", methods=["POST"])
+def auth_login():
+    data     = request.json
+    email    = data.get("email", "").strip()
+    password = data.get("password", "")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password required."}), 400
+
+    try:
+        res = db.auth.sign_in_with_password({"email": email, "password": password})
+        if res.user:
+            user_name = (res.user.user_metadata or {}).get("name") or email
+            session["user"] = {"id": res.user.id, "email": res.user.email, "name": user_name}
+            return jsonify({"user": session["user"]})
+        return jsonify({"error": "Invalid credentials."}), 401
+    except Exception as e:
+        return jsonify({"error": "Invalid email or password."}), 401
+
+
+@app.route("/auth/logout", methods=["POST"])
+def auth_logout():
+    session.pop("user", None)
+    try:
+        db.auth.sign_out()
+    except Exception:
+        pass
+    return jsonify({"message": "Logged out."})
+
+
+@app.route("/auth/me", methods=["GET"])
+def auth_me():
+    user = session.get("user")
+    if user:
+        return jsonify({"user": user})
+    return jsonify({"user": None}), 401
 
 
 # ── routes ───────────────────────────────────────────────────────────────────
