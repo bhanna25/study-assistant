@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify, render_template
-from flask import Response, stream_with_context
+from flask import Flask, request, jsonify, render_template, Response, stream_with_context
 from flask_cors import CORS
 from groq import Groq
 import os
 import base64
+import json
 from supabase import create_client
 from werkzeug.utils import secure_filename
 from langchain_community.document_loaders import PyPDFLoader
@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 MB upload limit
 
@@ -27,6 +27,23 @@ db = create_client(supabase_url, supabase_key)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
+def stream_ai(prompt, system="You are a helpful study assistant."):
+    """Generator that yields SSE chunks from Groq streaming API."""
+    stream = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user",   "content": prompt}
+        ],
+        stream=True
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield f"data: {json.dumps({'token': delta})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 def ask_ai(prompt, system="You are a helpful study assistant."):
     response = client.chat.completions.create(
@@ -60,6 +77,7 @@ def extract_text_from_txt(filepath):
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 # ---------- PDF upload + chunk-based QA ----------
 
@@ -238,41 +256,107 @@ def upload_any():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-@app.route("/auth/signup", methods=["POST"])
-def signup():
-    data = request.json
-    email = data.get("email")
-    password = data.get("password")
-    try:
-        res = db.auth.sign_up({"email": email, "password": password})
-        return jsonify({"message": "Account created! Please check email.", "user": email})
-    except Exception as e:
-        print("SIGNUP ERROR:", str(e))
-        return jsonify({"error": str(e)}), 400
-    
 
-@app.route("/auth/login", methods=["POST"])
-def login():
-    data = request.json
-    email = data.get("email")
-    password = data.get("password")
-    try:
-        res = db.auth.sign_in_with_password({"email": email, "password": password})
-        return jsonify({"token": res.session.access_token, "user": res.user.email})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 401
 
-@app.route("/auth/logout", methods=["POST"])
-def logout():
+# ---------- Streaming endpoints ----------
+
+@app.route("/stream-chat", methods=["POST"])
+def stream_chat():
+    question = request.json.get("question", "")
+    system = ("You are a helpful AI assistant. Answer any question clearly. "
+              "Use markdown formatting with headers, bullet points, and bold text where appropriate.")
     try:
-        db.auth.sign_out()
-        return jsonify({"message": "Logged out"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        db.table("messages").insert({"role": "user", "content": question}).execute()
+    except Exception:
+        pass
+    return Response(stream_with_context(stream_ai(question, system)),
+                    mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.route("/stream-pdf", methods=["POST"])
+def stream_pdf():
+    data     = request.json
+    question = data.get("question", "")
+    chunks   = data.get("chunks", [])
+    if not chunks:
+        def no_chunks():
+            yield 'data: {"token": "No PDF uploaded yet. Please attach a PDF first."}\n\n'
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(no_chunks()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    context = "\n\n".join(chunks[:6])
+    prompt  = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
+    system  = ("You are a helpful study assistant. Answer based on the provided document content only. "
+               "Use markdown formatting with headers, bullet points, and bold text where appropriate.")
+    return Response(stream_with_context(stream_ai(prompt, system)),
+                    mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.route("/stream-doc", methods=["POST"])
+def stream_doc():
+    data     = request.json
+    question = data.get("question", "")
+    content  = data.get("content", "")
+    filename = data.get("filename", "document")
+    if not content:
+        def no_content():
+            yield 'data: {"token": "No document content provided."}\n\n'
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(no_content()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    truncated = content[:12000]
+    prompt    = f"Document: {filename}\n\n{truncated}\n\nQuestion: {question}"
+    system    = ("You are a helpful assistant. Answer questions based on the provided document content. "
+                 "Use markdown formatting where appropriate.")
+    return Response(stream_with_context(stream_ai(prompt, system)),
+                    mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.route("/stream-image", methods=["POST"])
+def stream_image():
+    data       = request.json
+    question   = data.get("question", "Describe this image in detail.")
+    image_data = data.get("image_data", "")
+    mime_type  = data.get("mime_type", "image/jpeg")
+    if not image_data:
+        def no_image():
+            yield 'data: {"token": "No image data provided."}\n\n'
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(no_image()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    def gen_image_stream():
+        try:
+            stream = client.chat.completions.create(
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_data}"}},
+                        {"type": "text", "text": question}
+                    ]
+                }],
+                max_tokens=1024,
+                stream=True
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield f"data: {json.dumps({'token': delta})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'token': f'Error: {str(e)}'})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return Response(stream_with_context(gen_image_stream()),
+                    mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # ---------- General chat ----------
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -288,59 +372,7 @@ def chat():
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"answer": f"Error: {str(e)}"})
-    
 
-@app.route("/chat-stream", methods=["POST"])
-def chat_stream():
-    question = request.json.get("question")
-    chunks   = request.json.get("chunks", [])
-    content  = request.json.get("content", "")
-    image_data = request.json.get("image_data")
-    mime_type  = request.json.get("mime_type", "image/jpeg")
-    filename   = request.json.get("filename", "document")
-
-    # Build messages based on what's attached
-    if chunks:
-        context = "\n\n".join(chunks[:6])
-        user_msg = f"Based on this document:\n\n{context}\n\nAnswer: {question}"
-        messages = [{"role": "user", "content": user_msg}]
-    elif content:
-        truncated = content[:12000]
-        user_msg = f"Document: {filename}\n\n{truncated}\n\nQuestion: {question}"
-        messages = [{"role": "user", "content": user_msg}]
-    elif image_data:
-        messages = [{
-            "role": "user",
-            "content": [
-                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_data}"}},
-                {"type": "text", "text": question}
-            ]
-        }]
-    else:
-        messages = [{"role": "user", "content": question}]
-
-    system = "You are a helpful AI assistant. Use markdown formatting where appropriate."
-
-   
-def generate():
-        stream = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": system},
-                *messages
-            ],
-            stream=True
-        )
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                yield delta
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                yield delta
-
-return Response(stream_with_context(generate()), mimetype="text/plain")
 
 # ---------- Study tools ----------
 
