@@ -852,6 +852,8 @@
       if (data.type==='image') { att.image_data=data.image_data; att.mime_type=data.mime_type; }
 
       if (chat===1) attachment1=att; else attachment2=att;
+      if (chat === 1) { attachment1 = att; console.log('✅ attachment1 SET:', attachment1); }
+      else            { attachment2 = att; console.log('✅ attachment2 SET:', attachment2); }
       showFileBadge(chat, data.filename);
       if (chat===2) { document.getElementById('pdfBanner2').style.display='flex'; document.getElementById('pdfBannerName').textContent=data.filename; }
 
