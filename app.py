@@ -176,13 +176,21 @@ def ask_pdf():
     chunks   = request.json.get("chunks", [])
     if not chunks:
         return jsonify({"answer": "No PDF uploaded yet. Please upload a PDF first."})
-    context = "\n\n".join(chunks[:6])
-    prompt  = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
+    context = "\n\n".join(chunks[:8])
+    prompt  = f"""DOCUMENT CONTENT:
+    {context}
+
+    USER REQUEST : {question}
+
+    STRICT RULES:
+- Answer ONLY using content from the document above
+- Do NOT add any introduction, overview, or explanation unless asked
+- If user asks for fill-in-the-blanks, generate ONLY fill-in-the-blank questions from the document
+- If user asks for MCQs, generate ONLY MCQs from the document
+- Match EXACTLY what the user asked for, nothing more"""
     answer  = ask_ai(
         prompt,
-        "You are a helpful study assistant. Answer based on the provided document content only. "
-        "Use markdown formatting with headers, bullet points, and bold text where appropriate."
-    )
+        "You are a strict document assistant. Do exactly what the user asks using only the document content. No overviews unless asked.")
     return jsonify({"answer": answer})
 
 
