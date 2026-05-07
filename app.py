@@ -358,10 +358,21 @@ def stream_pdf():
             yield "data: [DONE]\n\n"
         return Response(stream_with_context(no_chunks()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-    context = "\n\n".join(chunks[:6])
-    prompt  = f"Based on this document:\n\n{context}\n\nAnswer this question: {question}"
-    system  = ("You are a helpful study assistant. Answer based on the provided document content only. "
-               "Use markdown formatting with headers, bullet points, and bold text where appropriate.")
+    context = "\n\n".join(chunks[:8])
+    prompt  = f"""DOCUMENT CONTENT:
+{context}
+
+USER REQUEST: {question}
+
+INSTRUCTIONS:
+- Use ONLY the document content above
+- Do exactly what the user asked, nothing more, nothing less
+- If user asks for fill in the blanks → generate ONLY fill in the blank questions with blanks as _______
+- If user asks for MCQs → generate ONLY MCQ questions with 4 options each
+- If user asks for summary → give a summary
+- Do NOT give an overview or introduction unless specifically asked
+- Start directly with what was asked, no preamble"""
+    system  = ("You are a strict document assistant. Do EXACTLY what the user requests using only the document content. Never give overviews unless asked.")
     return Response(stream_with_context(stream_ai(prompt, system)),
                     mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
@@ -380,9 +391,20 @@ def stream_doc():
         return Response(stream_with_context(no_content()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
     truncated = content[:12000]
-    prompt    = f"Document: {filename}\n\n{truncated}\n\nQuestion: {question}"
-    system    = ("You are a helpful assistant. Answer questions based on the provided document content. "
-                 "Use markdown formatting where appropriate.")
+    prompt    = f"""DOCUMENT CONTENT ({filename}):
+{truncated}
+
+USER REQUEST: {question}
+
+INSTRUCTIONS:
+- Use ONLY the document content above
+- Do exactly what the user asked, nothing more, nothing less
+- If user asks for fill in the blanks → generate ONLY fill in the blank questions with blanks as _______
+- If user asks for MCQs → generate ONLY MCQ questions with 4 options each
+- If user asks for summary → give a summary
+- Do NOT give an overview or introduction unless specifically asked
+- Start directly with what was asked, no preamble"""
+    system    = ("You are a strict document assistant. Do EXACTLY what the user requests using only the document content. Never give overviews unless asked.")
     return Response(stream_with_context(stream_ai(prompt, system)),
                     mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
