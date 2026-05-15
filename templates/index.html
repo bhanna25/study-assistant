@@ -366,6 +366,41 @@
       display: flex; align-items: center; gap: 8px; color: var(--accent);
     }
     .footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--muted); }
+
+    /* ── Mic button ── */
+    .mic-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border2);
+      background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+    }
+    .mic-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+    .mic-btn.recording {
+      background: #ef4444; color: #fff; border-color: #ef4444;
+      animation: micPulse 1s ease-in-out infinite;
+    }
+    @keyframes micPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+      50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    }
+
+    /* ── Retry bar (shown after a failed response) ── */
+    .retry-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 9px 14px; margin-top: 4px;
+      background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.28);
+      border-radius: 12px; font-size: 12px; color: #ef4444;
+      animation: fadeSlideIn 0.25s ease;
+    }
+    .retry-btn {
+      padding: 5px 14px; background: #ef4444; color: #fff; border: none;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    }
+    .retry-btn:hover { background: #dc2626; transform: translateY(-1px); }
+
+    /* ── Speak / TTS action button active state ── */
+    .speak-btn.speaking { color: var(--accent); border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -460,6 +495,7 @@
               <div class="chat-input-row">
                 <input type="file" id="fileInput1" accept=".pdf,.docx,.txt,.md,.csv,image/jpeg,image/png,image/gif,image/webp" style="display:none;" onchange="handleAnyFile(this,1)" />
                 <button class="attach-btn" onclick="document.getElementById('fileInput1').click()">+</button>
+                <button class="mic-btn" id="micBtn1" onclick="toggleVoice(1)" title="Voice input">🎤</button>
                 <input class="chat-text-input" id="chatInput" placeholder="Ask anything, or attach a PDF / DOCX / image…" onkeydown="if(event.key==='Enter'&&!isGenerating1)sendChat()" />
                 <button class="send-btn" id="sendBtn1" onclick="sendChat()">Send ➤</button>
                 <button class="stop-btn" id="stopBtn1" onclick="stopGeneration(1)">⏹ Stop</button>
@@ -500,6 +536,7 @@
                 <div class="chat-input-row">
                   <input type="file" id="fileInput2" accept=".pdf,.docx,.txt,.md,.csv,image/jpeg,image/png,image/gif,image/webp" style="display:none;" onchange="handleAnyFile(this,2)" />
                   <button class="attach-btn" onclick="document.getElementById('fileInput2').click()">+</button>
+                  <button class="mic-btn" id="micBtn2" onclick="toggleVoice(2)" title="Voice input">🎤</button>
                   <input class="chat-text-input" id="chatInput2" placeholder="Ask a study question or attach a file…" onkeydown="if(event.key==='Enter'&&!isGenerating2)sendChat2()" />
                   <button class="send-btn" id="sendBtn2" onclick="sendChat2()">Send ➤</button>
                   <button class="stop-btn" id="stopBtn2" onclick="stopGeneration(2)">⏹ Stop</button>
@@ -785,9 +822,33 @@
     wrapper.appendChild(div);
     if (role === 'ai') {
       const actions = document.createElement('div'); actions.className = 'msg-actions';
+
+      // Copy button
       const copyBtn = document.createElement('button'); copyBtn.className = 'action-btn'; copyBtn.textContent = '📋 Copy';
       copyBtn.onclick = () => { navigator.clipboard.writeText(text); copyBtn.textContent = '✅ Copied!'; setTimeout(()=>copyBtn.textContent='📋 Copy',2000); };
-      actions.appendChild(copyBtn); wrapper.appendChild(actions);
+      actions.appendChild(copyBtn);
+
+      // 🔊 Speak (TTS) button
+      if ('speechSynthesis' in window) {
+        const speakBtn = document.createElement('button'); speakBtn.className = 'action-btn speak-btn'; speakBtn.textContent = '🔊 Speak';
+        let isSpeaking = false;
+        speakBtn.onclick = () => {
+          if (isSpeaking) {
+            window.speechSynthesis.cancel(); isSpeaking = false;
+            speakBtn.textContent = '🔊 Speak'; speakBtn.classList.remove('speaking');
+          } else {
+            const plain = text.replace(/[#*`>_~\[\]()]/g, '').replace(/\n+/g, ' ').trim();
+            const utt = new SpeechSynthesisUtterance(plain);
+            utt.onend = () => { isSpeaking = false; speakBtn.textContent = '🔊 Speak'; speakBtn.classList.remove('speaking'); };
+            utt.onerror = () => { isSpeaking = false; speakBtn.textContent = '🔊 Speak'; speakBtn.classList.remove('speaking'); };
+            window.speechSynthesis.speak(utt);
+            isSpeaking = true; speakBtn.textContent = '⏹ Stop'; speakBtn.classList.add('speaking');
+          }
+        };
+        actions.appendChild(speakBtn);
+      }
+
+      wrapper.appendChild(actions);
     }
     box.appendChild(wrapper); box.scrollTop = box.scrollHeight;
     return { div, wrapper };
@@ -797,6 +858,21 @@
     const r = renderMsg(text, role, boxId);
     if (boxId === 'chatBox' && role !== 'thinking') pushMessage(role, text);
     return r ? r.div : null;
+  }
+
+  // ── Retry helpers ─────────────────────────────────────────────────────────
+  function addRetryBar(boxId, retryCb) {
+    const box = document.getElementById(boxId); if (!box) return;
+    removeRetryBar(boxId); // remove any existing one first
+    const bar = document.createElement('div'); bar.className = 'retry-bar'; bar.id = 'retryBar_' + boxId;
+    bar.innerHTML = '<span>⚠️ Something went wrong. Want to try again?</span>';
+    const btn = document.createElement('button'); btn.className = 'retry-btn'; btn.textContent = '🔄 Retry';
+    btn.onclick = () => { removeRetryBar(boxId); retryCb(); };
+    bar.appendChild(btn); box.appendChild(bar); box.scrollTop = box.scrollHeight;
+  }
+
+  function removeRetryBar(boxId) {
+    const bar = document.getElementById('retryBar_' + boxId); if (bar) bar.remove();
   }
 
   async function post(url, data) {
@@ -879,7 +955,7 @@
     return { question };
   }
 
-  async function streamSend(question, att, boxId, chat) {
+  async function streamSend(question, att, boxId, chat, onErrorRetry) {
     const box = document.getElementById(boxId);
     const wrapper = document.createElement('div'); wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;gap:6px;';
     const div = document.createElement('div'); div.className = 'msg ai';
@@ -887,12 +963,14 @@
     wrapper.appendChild(div); box.appendChild(wrapper); box.scrollTop = box.scrollHeight;
 
     let fullText = '';
+    let hadError = false;
     const controller = chat===1 ? (abortController1=new AbortController()) : (abortController2=new AbortController());
     try {
       const res = await fetch(buildStreamEndpoint(att), {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(buildStreamPayload(question, att)), signal: controller.signal
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const reader = res.body.getReader(), decoder = new TextDecoder();
       let buffer = '';
       while (true) {
@@ -906,28 +984,68 @@
         }
       }
     } catch(e) {
-      if (e.name==='AbortError') fullText += '\n\n⏹ *Generation stopped.*';
-      else fullText = fullText || 'Error: Could not get response.';
+      if (e.name==='AbortError') {
+        fullText += '\n\n⏹ *Generation stopped.*';
+      } else {
+        hadError = true;
+        fullText = fullText || 'Sorry, I couldn\'t get a response. Please try again.';
+      }
     }
     div.innerHTML = marked.parse(fullText);
+
+    // Action buttons row
+    const actions = document.createElement('div'); actions.className = 'msg-actions';
+
     const copyBtn = document.createElement('button'); copyBtn.className='action-btn'; copyBtn.textContent='📋 Copy';
     copyBtn.onclick=()=>{ navigator.clipboard.writeText(fullText); copyBtn.textContent='✅ Copied!'; setTimeout(()=>copyBtn.textContent='📋 Copy',2000); };
-    wrapper.appendChild(copyBtn); box.scrollTop = box.scrollHeight;
+    actions.appendChild(copyBtn);
+
+    // 🔊 Speak button on streamed responses too
+    if ('speechSynthesis' in window) {
+      const speakBtn = document.createElement('button'); speakBtn.className = 'action-btn speak-btn'; speakBtn.textContent = '🔊 Speak';
+      let isSpeaking = false;
+      speakBtn.onclick = () => {
+        if (isSpeaking) {
+          window.speechSynthesis.cancel(); isSpeaking = false;
+          speakBtn.textContent = '🔊 Speak'; speakBtn.classList.remove('speaking');
+        } else {
+          const plain = fullText.replace(/[#*`>_~\[\]()]/g, '').replace(/\n+/g, ' ').trim();
+          const utt = new SpeechSynthesisUtterance(plain);
+          utt.onend = () => { isSpeaking = false; speakBtn.textContent = '🔊 Speak'; speakBtn.classList.remove('speaking'); };
+          window.speechSynthesis.speak(utt);
+          isSpeaking = true; speakBtn.textContent = '⏹ Stop'; speakBtn.classList.add('speaking');
+        }
+      };
+      actions.appendChild(speakBtn);
+    }
+
+    wrapper.appendChild(actions);
+    box.scrollTop = box.scrollHeight;
+
+    // Show retry bar if there was an error and we have a retry callback
+    if (hadError && onErrorRetry) addRetryBar(boxId, onErrorRetry);
+
     if (boxId==='chatBox') pushMessage('ai', fullText);
   }
 
   async function sendChat() {
     if (isGenerating1) return;
     const input = document.getElementById('chatInput'), q = input.value.trim(); if (!q) return;
+    lastQuery1 = { q, att: attachment1 };
+    removeRetryBar('chatBox');
     addMsg(q,'user','chatBox'); input.value=''; setGenerating(1,true);
-    await streamSend(q, attachment1, 'chatBox', 1); setGenerating(1,false);
+    await streamSend(q, attachment1, 'chatBox', 1, () => { setGenerating(1,true); streamSend(lastQuery1.q, lastQuery1.att, 'chatBox', 1, () => { setGenerating(1,true); streamSend(lastQuery1.q, lastQuery1.att, 'chatBox', 1, null).finally(()=>setGenerating(1,false)); }).finally(()=>setGenerating(1,false)); });
+    setGenerating(1,false);
   }
 
   async function sendChat2() {
     if (isGenerating2) return;
     const input = document.getElementById('chatInput2'), q = input.value.trim(); if (!q) return;
+    lastQuery2 = { q, att: attachment2 };
+    removeRetryBar('chatBox2');
     renderMsg(q,'user','chatBox2'); input.value=''; setGenerating(2,true);
-    await streamSend(q, attachment2, 'chatBox2', 2); setGenerating(2,false);
+    await streamSend(q, attachment2, 'chatBox2', 2, () => { setGenerating(2,true); streamSend(lastQuery2.q, lastQuery2.att, 'chatBox2', 2, () => { setGenerating(2,true); streamSend(lastQuery2.q, lastQuery2.att, 'chatBox2', 2, null).finally(()=>setGenerating(2,false)); }).finally(()=>setGenerating(2,false)); });
+    setGenerating(2,false);
   }
 
   // ── Study tools ───────────────────────────────────────────────────────────
@@ -990,6 +1108,70 @@
   async function clearHistory() {
     await post('/clear',{}); sessions=[]; activeId=null; saveSessions(); renderSidebar();
     document.getElementById('chatBox').innerHTML=''; document.getElementById('chatBox2').innerHTML='';
+  }
+
+  // ── Last query state (for retry) ──────────────────────────────────────────
+  let lastQuery1 = { q: '', att: null };
+  let lastQuery2 = { q: '', att: null };
+
+  // ── Voice input (Web Speech API) ──────────────────────────────────────────
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let voiceRecognition = null;
+  let activeVoiceChat = null;
+
+  function toggleVoice(chat) {
+    if (!SpeechRecognition) {
+      alert('Voice input is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+    // If already recording on this chat, stop it
+    if (activeVoiceChat !== null) {
+      voiceRecognition && voiceRecognition.stop();
+      stopVoiceUI(activeVoiceChat);
+      if (activeVoiceChat === chat) return; // toggled same mic off — done
+    }
+    // Start recording
+    voiceRecognition = new SpeechRecognition();
+    voiceRecognition.lang = 'en-US';
+    voiceRecognition.interimResults = true;
+    voiceRecognition.continuous = false;
+
+    const inputEl = document.getElementById(chat === 1 ? 'chatInput' : 'chatInput2');
+
+    voiceRecognition.onstart = () => {
+      activeVoiceChat = chat;
+      document.getElementById('micBtn' + chat).classList.add('recording');
+      document.getElementById('micBtn' + chat).title = 'Recording… click to stop';
+      inputEl.placeholder = '🎤 Listening…';
+    };
+
+    voiceRecognition.onresult = (e) => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+      inputEl.value = transcript;
+    };
+
+    voiceRecognition.onend = () => {
+      stopVoiceUI(chat);
+      const val = inputEl.value.trim();
+      if (val) { chat === 1 ? sendChat() : sendChat2(); }
+    };
+
+    voiceRecognition.onerror = (e) => {
+      stopVoiceUI(chat);
+      if (e.error !== 'no-speech' && e.error !== 'aborted')
+        alert('Microphone error: ' + e.error);
+    };
+
+    voiceRecognition.start();
+  }
+
+  function stopVoiceUI(chat) {
+    const btn = document.getElementById('micBtn' + chat);
+    if (btn) { btn.classList.remove('recording'); btn.title = 'Voice input'; }
+    const inputEl = document.getElementById(chat === 1 ? 'chatInput' : 'chatInput2');
+    if (inputEl) inputEl.placeholder = chat === 1 ? 'Ask anything, or attach a PDF / DOCX / image…' : 'Ask a study question or attach a file…';
+    activeVoiceChat = null;
+    voiceRecognition = null;
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────
